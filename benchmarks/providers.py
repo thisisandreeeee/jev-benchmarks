@@ -152,7 +152,7 @@ class TypeSafeProvider:
                 candidates,
             )
             legend = {str(key): str(value) for key, value in answer.legend.items()}
-            if set(legend) != candidates or not math.isfinite(answer.score):
+            if set(legend) != candidates or not math.isfinite(answer.score) or not 0 <= answer.score <= len(question.criteria) - 1:
                 raise ValueError("provider score does not match the submitted rubric")
             result = ScoreResult(answer.score, probabilities, legend)
         elif isinstance(question, Noul) and answer.type == "noul":
