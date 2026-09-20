@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 from typesafe_sdk import ChoiceAnswer, NoulAnswer, ScoreAnswer
 
-from benchmarks.providers import Choice, Noul, Score, TypeSafeProvider
+from benchmarks.providers import Choice, Noul, Score, TransformersNoulProvider, TypeSafeProvider
 
 
 class FakeClient:
@@ -68,3 +68,43 @@ def test_typesafe_rejects_score_outside_rubric():
     )
     with pytest.raises(ValueError, match="rubric"):
         provider_with(answer).infer("state", Score("rate", ("low", "medium", "high")))
+
+
+class FakeLogits:
+    def __getitem__(self, key):
+        assert key == 0
+        return self
+
+    def float(self):
+        return self
+
+    def cpu(self):
+        return self
+
+    def tolist(self):
+        return [-1.0, 1.0]
+
+
+class FakeTransformersModel:
+    def __call__(self, **kwargs):
+        assert kwargs == {"input_ids": [1, 2, 3]}
+        return SimpleNamespace(logits=FakeLogits())
+
+
+def test_transformers_noul_provider_returns_positive_probability():
+    provider = object.__new__(TransformersNoulProvider)
+    provider.model_id = "example/model"
+    provider.revision = "abc123"
+    provider.positive_index = 1
+    provider.tokenizer = lambda text, **kwargs: {"input_ids": [1, 2, 3]}
+    provider.model = FakeTransformersModel()
+
+    inference = provider.infer("A wonderful film.", Noul("positive?"))
+
+    assert inference.result.noul == pytest.approx(0.8807970779)
+    assert inference.metadata == {
+        "provider": "huggingface",
+        "model": "example/model",
+        "revision": "abc123",
+        "confidence": pytest.approx(0.8807970779),
+    }
