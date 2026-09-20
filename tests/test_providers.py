@@ -38,6 +38,13 @@ def test_typesafe_rejects_invalid_distribution():
         provider_with(answer).infer("state", Choice("pick", ("a", "b")))
 
 
+def test_typesafe_normalizes_provider_rounding():
+    answer = ChoiceAnswer(type="choice", choice="a", confidence=0.7, probabilities={"a": 0.7, "b": 0.29})
+    probabilities = provider_with(answer).infer("state", Choice("pick", ("a", "b"))).result.probabilities
+    assert sum(probabilities.values()) == pytest.approx(1.0)
+    assert probabilities == pytest.approx({"a": 0.7 / 0.99, "b": 0.29 / 0.99})
+
+
 def test_typesafe_score_and_noul_conversion():
     score = ScoreAnswer(
         type="score", score=1.7, confidence=0.8,
