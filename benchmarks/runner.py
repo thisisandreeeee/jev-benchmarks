@@ -65,6 +65,7 @@ def publication(run: dict[str, Any]) -> dict[str, Any]:
         "identity": run["identity"],
         "dependencies": run["dependencies"],
         "repository_revision": run["repository_revision"],
+        "repository_clean": run.get("repository_clean"),
         "evaluated": run["evaluated"],
         "total": run["total"],
         "metrics": run["metrics"],
@@ -87,6 +88,13 @@ def repository_revision() -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def repository_clean() -> bool | None:
+    result = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=ROOT, text=True, capture_output=True, check=False
+    )
+    return not result.stdout if result.returncode == 0 else None
+
+
 def run_benchmark(
     dataset: Any,
     provider: Provider,
@@ -99,6 +107,7 @@ def run_benchmark(
     limit: int | None,
     resume: bool,
     concurrency: int,
+    dependencies: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     run_path, predictions_path = output / "run.json", output / "predictions.jsonl"
     if output.exists() and not resume:
@@ -113,8 +122,12 @@ def run_benchmark(
     else:
         run = {
             "identity": identity,
-            "dependencies": {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")},
+            "dependencies": dependencies or {
+                "datasets": version("datasets"),
+                "typesafe-sdk": version("typesafe-sdk"),
+            },
             "repository_revision": repository_revision(),
+            "repository_clean": repository_clean(),
             "started_at": now(),
         }
         summarize(run, [], len(dataset), "partial", metrics)
