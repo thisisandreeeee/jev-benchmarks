@@ -1,5 +1,5 @@
 from benchmarks.providers import Inference, NoulResult
-from benchmarks.sst2 import INSTRUCTION, evaluate_one, identity
+from benchmarks.sst2_jev import INSTRUCTION, evaluate_one, identity
 
 
 class FakeProvider:

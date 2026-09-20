@@ -2,7 +2,7 @@ import pytest
 
 from benchmarks.metrics import similarity_metrics
 from benchmarks.providers import Inference, ScoreResult
-from benchmarks.stsb import RUBRIC, evaluate_one, identity
+from benchmarks.stsb_jev import RUBRIC, evaluate_one, identity
 
 
 class FakeProvider:

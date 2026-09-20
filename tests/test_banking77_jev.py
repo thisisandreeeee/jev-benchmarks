@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-import benchmarks.banking77 as banking77
-from benchmarks.banking77 import INSTRUCTION, atomic_json, metrics, publish, run_benchmark
+import benchmarks.banking77_jev as banking77
+from benchmarks.banking77_jev import INSTRUCTION, atomic_json, metrics, publish, run_benchmark
 from benchmarks.providers import ChoiceResult, Inference
 
 
