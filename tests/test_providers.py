@@ -3,7 +3,15 @@ from types import SimpleNamespace
 import pytest
 from typesafe_sdk import ChoiceAnswer, NoulAnswer, ScoreAnswer
 
-from benchmarks.providers import Choice, Noul, Score, TransformersNoulProvider, TypeSafeProvider
+from benchmarks.providers import (
+    Choice,
+    Noul,
+    ScalarScoreResult,
+    Score,
+    SentenceTransformerScoreProvider,
+    TransformersNoulProvider,
+    TypeSafeProvider,
+)
 
 
 class FakeClient:
@@ -107,4 +115,21 @@ def test_transformers_noul_provider_returns_positive_probability():
         "model": "example/model",
         "revision": "abc123",
         "confidence": pytest.approx(0.8807970779),
+    }
+
+
+def test_sentence_transformer_provider_returns_scalar_cosine_without_probabilities():
+    provider = object.__new__(SentenceTransformerScoreProvider)
+    provider.model_id = "example/model"
+    provider.revision = "abc123"
+    provider.model = SimpleNamespace(encode=lambda sentences, **kwargs: __import__("torch").tensor([[1.0, 0.0], [0.6, 0.8]]))
+
+    inference = provider.infer_pair("first", "second")
+
+    assert isinstance(inference.result, ScalarScoreResult)
+    assert inference.result.as_dict() == {"type": "score", "score": pytest.approx(0.6)}
+    assert inference.metadata == {
+        "provider": "sentence-transformers",
+        "model": "example/model",
+        "revision": "abc123",
     }

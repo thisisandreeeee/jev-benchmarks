@@ -67,6 +67,15 @@ class ScoreResult:
 
 
 @dataclass(frozen=True)
+class ScalarScoreResult:
+    score: float
+    type: ClassVar[str] = "score"
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"type": self.type, "score": self.score}
+
+
+@dataclass(frozen=True)
 class NoulResult:
     noul: float
     type: ClassVar[str] = "noul"
@@ -75,7 +84,7 @@ class NoulResult:
         return {"type": self.type, "noul": self.noul}
 
 
-Result = ChoiceResult | ScoreResult | NoulResult
+Result = ChoiceResult | ScoreResult | ScalarScoreResult | NoulResult
 
 
 @dataclass(frozen=True)
@@ -202,4 +211,27 @@ class TransformersNoulProvider:
                 "revision": self.revision,
                 "confidence": max(probability, 1 - probability),
             },
+        )
+
+
+class SentenceTransformerScoreProvider:
+    """Local SentenceTransformer model exposed as a scalar cosine score."""
+
+    def __init__(self, model: str, revision: str) -> None:
+        from sentence_transformers import SentenceTransformer
+
+        self.model_id = model
+        self.revision = revision
+        self.model = SentenceTransformer(model, revision=revision)
+
+    def infer_pair(self, sentence1: str, sentence2: str) -> Inference:
+        import torch
+
+        embeddings = self.model.encode((sentence1, sentence2), convert_to_tensor=True)
+        score = float(torch.nn.functional.cosine_similarity(embeddings[0], embeddings[1], dim=0).item())
+        if not math.isfinite(score) or not -1 <= score <= 1:
+            raise ValueError("sentence-transformer cosine similarity must be finite and between -1 and 1")
+        return Inference(
+            ScalarScoreResult(score),
+            {"provider": "sentence-transformers", "model": self.model_id, "revision": self.revision},
         )
