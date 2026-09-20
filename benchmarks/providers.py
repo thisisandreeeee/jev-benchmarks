@@ -88,13 +88,15 @@ class Provider(Protocol):
     def infer(self, state: str, question: Question) -> Inference: ...
 
 
-def _validate_distribution(probabilities: dict[str, float], candidates: set[str]) -> None:
+def _normalize_distribution(probabilities: dict[str, float], candidates: set[str]) -> dict[str, float]:
     if set(probabilities) != candidates:
         raise ValueError("provider probabilities do not match the submitted candidates")
     if any(not math.isfinite(value) or not 0 <= value <= 1 for value in probabilities.values()):
         raise ValueError("provider probabilities must be finite and between zero and one")
-    if not math.isclose(sum(probabilities.values()), 1.0, abs_tol=1e-6):
+    total = sum(probabilities.values())
+    if not math.isclose(total, 1.0, rel_tol=0, abs_tol=0.01 + 1e-9):
         raise ValueError("provider probabilities must sum to one")
+    return probabilities if total == 1.0 else {key: value / total for key, value in probabilities.items()}
 
 
 class TypeSafeProvider:
@@ -139,16 +141,17 @@ class TypeSafeProvider:
             metadata["confidence"] = confidence
 
         if isinstance(question, Choice) and answer.type == "choice":
-            probabilities = dict(answer.probabilities)
-            _validate_distribution(probabilities, set(question.criteria))
+            probabilities = _normalize_distribution(dict(answer.probabilities), set(question.criteria))
             if answer.choice not in question.criteria:
                 raise ValueError("provider choice is not a submitted candidate")
             result: Result = ChoiceResult(answer.choice, probabilities)
         elif isinstance(question, Score) and answer.type == "score":
-            probabilities = {str(key): value for key, value in answer.probabilities.items()}
-            legend = {str(key): str(value) for key, value in answer.legend.items()}
             candidates = {str(index) for index in range(len(question.criteria))}
-            _validate_distribution(probabilities, candidates)
+            probabilities = _normalize_distribution(
+                {str(key): value for key, value in answer.probabilities.items()},
+                candidates,
+            )
+            legend = {str(key): str(value) for key, value in answer.legend.items()}
             if set(legend) != candidates or not math.isfinite(answer.score):
                 raise ValueError("provider score does not match the submitted rubric")
             result = ScoreResult(answer.score, probabilities, legend)
