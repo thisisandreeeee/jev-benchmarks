@@ -59,3 +59,12 @@ def test_typesafe_score_and_noul_conversion():
 
     noul = NoulAnswer(type="noul", noul=0.9)
     assert provider_with(noul).infer("state", Noul("yes?")).result.as_dict() == {"type": "noul", "noul": 0.9}
+
+
+def test_typesafe_rejects_score_outside_rubric():
+    answer = ScoreAnswer(
+        type="score", score=3.1, confidence=0.8,
+        probabilities={0: 0.0, 1: 0.0, 2: 1.0}, legend={0: "low", 1: "medium", 2: "high"},
+    )
+    with pytest.raises(ValueError, match="rubric"):
+        provider_with(answer).infer("state", Score("rate", ("low", "medium", "high")))
