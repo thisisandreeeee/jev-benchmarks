@@ -8,38 +8,9 @@ Direct same-split comparisons recomputed by this repository:
 
 | Benchmark | Supervised checkpoint              | Metric   | Baseline | Jev zero-shot |
 | --------- | ---------------------------------- | -------- | -------: | ------------: |
+| BANKING77 | SPACE-2 `state_epoch_51`           | Accuracy |    94.77 |         79.90 |
 | SST-2     | `philschmid/roberta-large-sst2`    | Accuracy |    96.44 |         94.50 |
 | STS-B     | `cross-encoder/stsb-roberta-large` | Spearman |    91.44 |         89.12 |
-
-Published historical references and existing Jev evaluations:
-
-| Benchmark | Metric   | BERT-Base |   Jev | Jev-like |
-| --------- | -------- | --------: | ----: | -------: |
-| BANKING77 | Accuracy |     93.02 | 79.90 |        — |
-| SST-2     | Accuracy |      93.5 | 94.50 |        — |
-| STS-B     | Spearman |      85.8 |     — |        — |
-
-The BERT figures are published supervised references, not zero-shot results:
-
-- [BERT, Table 1](https://arxiv.org/pdf/1810.04805)
-- [SPACE-2, Table 2](https://aclanthology.org/2022.coling-1.46.pdf)
-
-The supervised values above were locally recomputed from pinned checkpoint
-revisions. The previous DistilBERT and SBERT aggregate artifacts are retained
-as historical results.
-
-SST-2 uses the public GLUE validation split. Its BERT reference uses the hidden
-test split, so those figures are not directly comparable.
-See [EVALUATION.md](EVALUATION.md) for the frozen comparison protocol and its
-limitations.
-
-## Jev question types
-
-| Question type | Benchmarks | What they evaluate              |
-| ------------- | ---------- | ------------------------------- |
-| `Choice`      | BANKING77  | Intent classification           |
-| `Noul`        | SST-2      | Binary sentiment classification |
-| `Score`       | STS-B      | Semantic similarity scoring     |
 
 ## Usage
 
@@ -52,16 +23,50 @@ uv sync
 uv run pytest
 ```
 
-Run the benchmarks:
+Run a small sample from each benchmark:
 
 ```bash
-# Five-example live smoke test
-uv run python -m benchmarks.banking77 --limit 5
-
-# Continue the same run through all remaining examples
-uv run python -m benchmarks.banking77 --resume
+uv run python -m benchmarks.banking77 --provider typesafe --limit 5
+uv run python -m benchmarks.banking77 --provider space-2 --limit 5
+uv run python -m benchmarks.sst2 --provider typesafe --limit 5
+uv run python -m benchmarks.sst2 --provider huggingface --limit 5
+uv run python -m benchmarks.stsb --provider sentence-transformers --limit 5
+uv run python -m benchmarks.stsb --provider typesafe --limit 5
 ```
+
+Remove `--limit 5` to start a complete benchmark, or replace it with `--resume`
+to finish a sample run in the same output directory. Commands using
+`--provider typesafe` require valid TypeSafe credentials in `.env` and incur
+API usage. The supervised commands run locally.
+
+### SPACE-2 release setup
+
+Download the pinned author archives and extract only the BANKING77 files:
+
+```bash
+mkdir -p .cache/space2
+curl -L 'https://drive.usercontent.google.com/download?id=10QEEMNsjO5rH0ZRsJBj9zkDc5ozxc3Ch&export=download&confirm=t' -o .cache/space2/outputs.zip
+curl -L 'https://drive.usercontent.google.com/download?id=1ocwnuOLxB3VzngeWZsm59IRrhEv22Scx&export=download&confirm=t' -o .cache/space2/data.zip
+unzip .cache/space2/outputs.zip 'outputs/banking/*' -d .cache/space2
+unzip .cache/space2/data.zip 'data/pre_train/AnPreDial/single_turn/banking/test.json' -d .cache/space2
+curl -L 'https://huggingface.co/google-bert/bert-base-uncased/resolve/86b5e0934494bd15c9632b12f734a8a67f723594/vocab.txt' -o .cache/space2/vocab.txt
+```
+
+The BANKING77 entry point verifies every archive and extracted-file digest
+against `manifests/space2-banking77.json`, proves author/canonical row
+alignment, and checks three local checkpoint predictions against the authors'
+saved output before running.
+
+The consolidated `benchmarks.stsb` entry point evaluates the original
+1,379-row STS Benchmark test split. Select `sentence-transformers` for the
+supervised baseline or `typesafe` for Jev; both providers use the same rows.
+
+Use `--concurrency N` to run TypeSafe inference requests in parallel. SPACE-2
+uses internal batching and requires the default concurrency of one.
+Use `--output PATH` to write raw run artifacts somewhere other than the
+default `runs/` directory.
 
 ## Backlog
 
 - Analyse jev calibration (NLL, ECE)
+- Remove PLAN.md and EVALUATION.md
