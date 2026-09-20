@@ -39,6 +39,39 @@ def classification_metrics(records: list[dict[str, Any]]) -> dict[str, float | N
     }
 
 
+def noul_metrics(records: list[dict[str, Any]]) -> dict[str, float | None]:
+    if not records:
+        return {
+            "accuracy": None,
+            "mean_confidence": None,
+            "negative_log_loss": None,
+            "expected_calibration_error": None,
+        }
+    correct, confidences, losses = 0, [], []
+    bins: list[list[tuple[float, bool]]] = [[] for _ in range(10)]
+    for record in records:
+        probability = float(record["result"]["noul"])
+        expected = bool(record["expected"])
+        confidence = max(probability, 1 - probability)
+        hit = (probability >= 0.5) == expected
+        correct += hit
+        confidences.append(confidence)
+        losses.append(-math.log(max(probability if expected else 1 - probability, 1e-15)))
+        bins[min(int(confidence * 10), 9)].append((confidence, hit))
+    ece = sum(
+        len(items) / len(records)
+        * abs(sum(confidence for confidence, _ in items) / len(items) - sum(hit for _, hit in items) / len(items))
+        for items in bins
+        if items
+    )
+    return {
+        "accuracy": correct / len(records),
+        "mean_confidence": sum(confidences) / len(records),
+        "negative_log_loss": sum(losses) / len(records),
+        "expected_calibration_error": ece,
+    }
+
+
 def _pearson(left: list[float], right: list[float]) -> float | None:
     if len(left) < 2:
         return None
