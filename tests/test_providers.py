@@ -8,9 +8,10 @@ from benchmarks.providers import (
     Noul,
     ScalarScoreResult,
     Score,
-    SentenceTransformerScoreProvider,
+    CrossEncoderScoreProvider,
     TransformersNoulProvider,
     TypeSafeProvider,
+    _label_indices,
 )
 
 
@@ -118,11 +119,15 @@ def test_transformers_noul_provider_returns_positive_probability():
     }
 
 
-def test_sentence_transformer_provider_returns_scalar_cosine_without_probabilities():
-    provider = object.__new__(SentenceTransformerScoreProvider)
+def test_transformers_label_indices_accept_serialized_strings():
+    assert _label_indices({"negative": "0", "positive": "1"}) == {"negative": 0, "positive": 1}
+
+
+def test_cross_encoder_provider_returns_scalar_score_without_probabilities():
+    provider = object.__new__(CrossEncoderScoreProvider)
     provider.model_id = "example/model"
     provider.revision = "abc123"
-    provider.model = SimpleNamespace(encode=lambda sentences, **kwargs: __import__("torch").tensor([[1.0, 0.0], [0.6, 0.8]]))
+    provider.model = SimpleNamespace(predict=lambda pairs, **kwargs: [0.6])
 
     inference = provider.infer_pair("first", "second")
 

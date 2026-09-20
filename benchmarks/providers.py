@@ -174,6 +174,10 @@ class TypeSafeProvider:
         return Inference(result, metadata)
 
 
+def _label_indices(label2id: dict[str, int | str]) -> dict[str, int]:
+    return {label.casefold(): int(index) for label, index in label2id.items()}
+
+
 class TransformersNoulProvider:
     """Local Hugging Face binary classifier exposed as a Noul probability."""
 
@@ -185,7 +189,7 @@ class TransformersNoulProvider:
         self.tokenizer = AutoTokenizer.from_pretrained(model, revision=revision)
         self.model = AutoModelForSequenceClassification.from_pretrained(model, revision=revision)
         self.model.eval()
-        labels = {label.casefold(): index for label, index in self.model.config.label2id.items()}
+        labels = _label_indices(self.model.config.label2id)
         try:
             self.positive_index = labels[positive_label.casefold()]
         except KeyError as error:
@@ -214,23 +218,20 @@ class TransformersNoulProvider:
         )
 
 
-class SentenceTransformerScoreProvider:
-    """Local SentenceTransformer model exposed as a scalar cosine score."""
+class CrossEncoderScoreProvider:
+    """Local SentenceTransformers cross-encoder exposed as a scalar score."""
 
     def __init__(self, model: str, revision: str) -> None:
-        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import CrossEncoder
 
         self.model_id = model
         self.revision = revision
-        self.model = SentenceTransformer(model, revision=revision)
+        self.model = CrossEncoder(model, revision=revision)
 
     def infer_pair(self, sentence1: str, sentence2: str) -> Inference:
-        import torch
-
-        embeddings = self.model.encode((sentence1, sentence2), convert_to_tensor=True)
-        score = float(torch.nn.functional.cosine_similarity(embeddings[0], embeddings[1], dim=0).item())
-        if not math.isfinite(score) or not -1 <= score <= 1:
-            raise ValueError("sentence-transformer cosine similarity must be finite and between -1 and 1")
+        score = float(self.model.predict([(sentence1, sentence2)], show_progress_bar=False)[0])
+        if not math.isfinite(score) or not 0 <= score <= 1:
+            raise ValueError("cross-encoder score must be finite and between zero and one")
         return Inference(
             ScalarScoreResult(score),
             {"provider": "sentence-transformers", "model": self.model_id, "revision": self.revision},

@@ -1,4 +1,4 @@
-"""Run SST-2 validation evaluations with DistilBERT or TypeSafe Jev."""
+"""Run SST-2 validation evaluations with RoBERTa-large or TypeSafe Jev."""
 
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ DATASET_REVISION = "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c"
 DATASET_SPLIT = "validation"
 INSTRUCTION = "Does this movie-review sentence express positive sentiment?"
 JEV_MODEL = "jev-1.13.0"
-MODEL = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
-MODEL_REVISION = "714eb0fa89d2f80546fda750413ed43d93601a13"
+MODEL = "philschmid/roberta-large-sst2"
+MODEL_REVISION = "7d2599d698b7a805b6831e15e830e60a0b07bdb4"
 MODEL_CARD = f"https://huggingface.co/{MODEL}"
-POSITIVE_LABEL = "POSITIVE"
-SLUG = "distilbert-base-uncased-finetuned-sst-2-english"
+POSITIVE_LABEL = "positive"
+SLUG = "roberta-large-sst2"
 ROOT = Path(__file__).resolve().parents[1]
 
 

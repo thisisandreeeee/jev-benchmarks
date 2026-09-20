@@ -1,4 +1,4 @@
-"""Run STS-B original-test evaluations with SBERT or TypeSafe Jev."""
+"""Run STS-B original-test evaluations with RoBERTa-large or TypeSafe Jev."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from benchmarks.providers import (
     ScalarScoreResult,
     Score,
     ScoreResult,
-    SentenceTransformerScoreProvider,
+    CrossEncoderScoreProvider,
     TypeSafeProvider,
 )
 from benchmarks.runner import run_benchmark
@@ -31,10 +31,10 @@ DATASET_REVISION = "96943a16ea6a35129e253c659081cb59daf81b30"
 DATASET_SPLIT = "test"
 EXPECTED_ROWS = 1_379
 ROW_DIGEST = "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060"
-MODEL = "sentence-transformers/stsb-bert-base"
-MODEL_REVISION = "73822fe64c1f91818b34e4b5d23fca7092f6dcc8"
+MODEL = "cross-encoder/stsb-roberta-large"
+MODEL_REVISION = "2b12c2c0088918e76151fd5937b7bba986ef1f98"
 MODEL_CARD = f"https://huggingface.co/{MODEL}"
-PAPER = "https://aclanthology.org/D19-1410/"
+SLUG = "stsb-roberta-large"
 JEV_MODEL = "jev-1.13.0"
 ROOT = Path(__file__).resolve().parents[1]
 INSTRUCTION = "Rate the semantic similarity of the two sentences using the rubric."
@@ -92,9 +92,8 @@ def identity(provider: str) -> dict[str, Any]:
                 "model": MODEL,
                 "model_revision": MODEL_REVISION,
                 "model_card": MODEL_CARD,
-                "model_card_status": "deprecated",
-                "paper": PAPER,
-                "score": "cosine_similarity",
+                "score": "cross_encoder_regression",
+                "score_scale": "0..1",
             }
         )
     elif provider == "typesafe":
@@ -142,7 +141,7 @@ def run(
     evaluate: Callable[..., dict[str, Any]]
     if provider_name == "sentence-transformers":
         evaluate = evaluate_sentence_transformer
-        slug = "stsb-bert-base"
+        slug = SLUG
         dependencies = {
             "datasets": version("datasets"),
             "sentence-transformers": version("sentence-transformers"),
@@ -183,7 +182,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.concurrency < 1:
         parser.error("--concurrency must be at least 1")
     if args.output is None:
-        slug = "stsb-bert-base" if args.provider == "sentence-transformers" else JEV_MODEL
+        slug = SLUG if args.provider == "sentence-transformers" else JEV_MODEL
         args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
     return args
 
@@ -194,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
 
     dataset = load_dataset(DATASET_ID, DATASET_CONFIG, revision=DATASET_REVISION, split=DATASET_SPLIT)
     if args.provider == "sentence-transformers":
-        provider: Any = SentenceTransformerScoreProvider(MODEL, MODEL_REVISION)
+        provider: Any = CrossEncoderScoreProvider(MODEL, MODEL_REVISION)
     else:
         load_dotenv(ROOT / ".env")
         provider = TypeSafeProvider(JEV_MODEL)

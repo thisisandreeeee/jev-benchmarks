@@ -12,7 +12,7 @@ ROWS = [
 ]
 
 
-class FakeSentenceTransformer:
+class FakeCrossEncoder:
     def infer_pair(self, sentence1, sentence2):
         assert (sentence1, sentence2) == ("A person runs.", "Someone is running.")
         return Inference(ScalarScoreResult(0.75), {"provider": "fake"})
@@ -26,8 +26,8 @@ class FakeTypeSafe:
         )
 
 
-def test_sentence_transformer_record_preserves_pair_and_scalar_result():
-    record = stsb.evaluate_sentence_transformer(FakeSentenceTransformer(), 7, ROWS[0])
+def test_cross_encoder_record_preserves_pair_and_scalar_result():
+    record = stsb.evaluate_sentence_transformer(FakeCrossEncoder(), 7, ROWS[0])
     assert record["dataset_id"] == 7
     assert record["state"] == "Sentence 1: A person runs.\nSentence 2: Someone is running."
     assert record["expected"] == 4.5
@@ -50,7 +50,8 @@ def test_identity_pins_original_test_rows_model_and_separate_paths(tmp_path: Pat
     assert local["dataset"]["rows"] == 1_379
     assert len(local["dataset"]["row_digest"]) == 64
     assert local["model_revision"] == stsb.MODEL_REVISION
-    assert local["model_card_status"] == "deprecated"
+    assert local["score"] == "cross_encoder_regression"
+    assert local["score_scale"] == "0..1"
     monkeypatch.setattr(stsb, "ROOT", tmp_path)
     local_args = stsb.parse_args(["--provider", "sentence-transformers"])
     jev_args = stsb.parse_args(["--provider", "typesafe"])
