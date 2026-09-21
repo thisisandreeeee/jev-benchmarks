@@ -98,10 +98,17 @@ def _ranks(values: list[float]) -> list[float]:
     return ranks
 
 
+def spearman(expected: list[float], predicted: list[float]) -> float | None:
+    """Tie-aware Spearman correlation, undefined for fewer than two pairs."""
+    if len(expected) < 2:
+        return None
+    return _pearson(_ranks(expected), _ranks(predicted))
+
+
 def similarity_metrics(records: list[dict[str, Any]]) -> dict[str, float | None]:
     expected = [float(record["expected"]) for record in records]
     predicted = [float(record["result"]["score"]) for record in records]
     return {
         "pearson": _pearson(expected, predicted),
-        "spearman": _pearson(_ranks(expected), _ranks(predicted)) if records else None,
+        "spearman": spearman(expected, predicted) if records else None,
     }
