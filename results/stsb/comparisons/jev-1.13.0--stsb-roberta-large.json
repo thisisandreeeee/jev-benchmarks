@@ -1,0 +1,101 @@
+{
+  "benchmark": "stsb",
+  "bootstrap": {
+    "confidence_level": 0.95,
+    "excluded_samples": 0,
+    "method": "paired-percentile",
+    "samples": 100000,
+    "seed": 12345
+  },
+  "code": {
+    "clean": false,
+    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+  },
+  "dataset": {
+    "config": "default",
+    "id": "mteb/stsbenchmark-sts",
+    "revision": "96943a16ea6a35129e253c659081cb59daf81b30",
+    "row_digest": "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060",
+    "rows": 1379,
+    "score_scale": "0..5",
+    "split": "test"
+  },
+  "difference": {
+    "interval": {
+      "lower": -0.03362392584222061,
+      "upper": -0.010984197803540782
+    },
+    "label": "left_minus_right",
+    "value": -0.022297857479676164
+  },
+  "left": {
+    "identity": {
+      "benchmark": "stsb",
+      "dataset": {
+        "config": "default",
+        "id": "mteb/stsbenchmark-sts",
+        "revision": "96943a16ea6a35129e253c659081cb59daf81b30",
+        "row_digest": "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060",
+        "rows": 1379,
+        "score_scale": "0..5",
+        "split": "test"
+      },
+      "instruction": "Rate the semantic similarity of the two sentences using the rubric.",
+      "model": "jev-1.13.0",
+      "provider": "typesafe",
+      "rubric": [
+        "The sentences are completely dissimilar.",
+        "The sentences are on the same topic but are not equivalent.",
+        "The sentences share some details but are not equivalent.",
+        "The sentences are roughly equivalent, but important information differs.",
+        "The sentences are mostly equivalent, with only minor differences.",
+        "The sentences are completely equivalent in meaning."
+      ],
+      "schema_version": 1
+    },
+    "path": "runs/stsb/typesafe/jev-1.13.0",
+    "predictions_sha256": "31780fedc5cef4eeb765db8b86a73fceceb33438138a54b38a96785b31cc2cbb",
+    "run_sha256": "2969b00f7769416aa78c8404bc40b620db63ffd06019186cd15d82e0e2b8e7ab",
+    "score": 0.8920610199975396
+  },
+  "metric": "spearman",
+  "outcomes": null,
+  "right": {
+    "identity": {
+      "benchmark": "stsb",
+      "dataset": {
+        "config": "default",
+        "id": "mteb/stsbenchmark-sts",
+        "revision": "96943a16ea6a35129e253c659081cb59daf81b30",
+        "row_digest": "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060",
+        "rows": 1379,
+        "score_scale": "0..5",
+        "split": "test"
+      },
+      "instruction": "Rate the semantic similarity of the two sentences using the rubric.",
+      "model": "cross-encoder/stsb-roberta-large",
+      "model_card": "https://huggingface.co/cross-encoder/stsb-roberta-large",
+      "model_revision": "2b12c2c0088918e76151fd5937b7bba986ef1f98",
+      "provider": "sentence-transformers",
+      "rubric": [
+        "The sentences are completely dissimilar.",
+        "The sentences are on the same topic but are not equivalent.",
+        "The sentences share some details but are not equivalent.",
+        "The sentences are roughly equivalent, but important information differs.",
+        "The sentences are mostly equivalent, with only minor differences.",
+        "The sentences are completely equivalent in meaning."
+      ],
+      "schema_version": 1,
+      "score": "cross_encoder_regression",
+      "score_scale": "0..1"
+    },
+    "path": "runs/stsb/sentence-transformers/stsb-roberta-large",
+    "predictions_sha256": "5427fe39ae9f913d1e3e179775e6c192c9c3240f05cceb4661e67a92cda589db",
+    "run_sha256": "bc29107fa17b582c53240d66b6f2a97c3150b6c9b3f9227ba893db89487be5ab",
+    "score": 0.9143588774772158
+  },
+  "row_digest": "661d8129b0887e2ce66940a45ae8e64a98f41457295065b702d2cd1033bd46eb",
+  "rows": 1379,
+  "schema_version": 1,
+  "split": "test"
+}
