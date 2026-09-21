@@ -12,8 +12,16 @@ from typing import Any, Callable
 
 from dotenv import load_dotenv
 
+from benchmarks import nli
 from benchmarks.metrics import classification_metrics
-from benchmarks.providers import Choice, ChoiceResult, Provider, Space2Provider, TypeSafeProvider
+from benchmarks.providers import (
+    Choice,
+    ChoiceResult,
+    NliZeroShotProvider,
+    Provider,
+    Space2Provider,
+    TypeSafeProvider,
+)
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 from benchmarks.space2_release import (
     author_rows,
@@ -79,7 +87,11 @@ def dataset_identity(config: IntentConfig) -> dict[str, Any]:
 
 
 def identity(
-    provider: str, labels: tuple[str, ...], config: IntentConfig, manifest: dict[str, Any] | None = None
+    provider: str,
+    labels: tuple[str, ...],
+    config: IntentConfig,
+    manifest: dict[str, Any] | None = None,
+    nli_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     value: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -103,6 +115,8 @@ def identity(
                 "manifest_sha256": manifest["manifest_sha256"],
             }
         )
+    elif provider == "nli" and nli_identity is not None:
+        value.update(nli_identity)
     else:
         raise ValueError(f"unsupported provider: {provider}")
     return value
@@ -135,6 +149,7 @@ def run(
     limit: int | None,
     resume: bool,
     concurrency: int,
+    nli_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     validate_dataset(rows, config)
     prepare = getattr(provider, "prepare", None)
@@ -147,17 +162,25 @@ def run(
         if resume and predictions.exists():
             completed = {json.loads(line)["dataset_id"] for line in predictions.read_text().splitlines()}
         prepare([rows[index]["text"] for index in range(stop) if index not in completed])
-    slug = JEV_MODEL if provider_name == "typesafe" else config.space2_model
-    dependencies = {"datasets": version("datasets")}
     if provider_name == "typesafe":
-        dependencies["typesafe-sdk"] = version("typesafe-sdk")
+        slug = JEV_MODEL
+        dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
+    elif provider_name == "space-2":
+        slug = config.space2_model
+        dependencies = {"datasets": version("datasets"), "torch": version("torch"), "transformers": version("transformers")}
+    elif provider_name == "nli":
+        slug = nli.SLUG
+        dependencies = {"datasets": version("datasets"), "torch": version("torch"), "transformers": version("transformers")}
     else:
-        dependencies.update({"torch": version("torch"), "transformers": version("transformers")})
+        raise ValueError(f"unsupported provider: {provider_name}")
+    nli_identity = (
+        nli.provider_identity(nli_manifest, config.benchmark) if nli_manifest is not None else None
+    )
     return run_benchmark(
         rows,
         provider,
         output,
-        identity=identity(provider_name, labels, config, manifest),
+        identity=identity(provider_name, labels, config, manifest, nli_identity),
         evaluate=lambda provider, row_id, row: evaluate_one(provider, row_id, row, labels, config.instruction),
         metrics=classification_metrics,
         result_path=ROOT / "results" / config.benchmark / f"{provider_name}-{slug}.json",
@@ -169,22 +192,27 @@ def run(
 
 
 def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=f"Run {config.benchmark} with SPACE-2 or TypeSafe Jev.")
-    parser.add_argument("--provider", choices=("typesafe", "space-2"), required=True)
+    parser = argparse.ArgumentParser(description=f"Run {config.benchmark} with SPACE-2, zero-shot NLI, or TypeSafe Jev.")
+    parser.add_argument("--provider", choices=("typesafe", "space-2", "nli"), required=True)
     add_run_arguments(parser)
     parser.add_argument("--manifest", type=Path, default=config.manifest)
     parser.add_argument("--space2-dir", type=Path, default=DEFAULT_SPACE2_DIR)
+    parser.add_argument("--nli-manifest", type=Path, default=nli.DEFAULT_MANIFEST)
+    parser.add_argument("--device", default=None)
+    parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
-    if args.provider == "space-2" and args.concurrency != 1:
-        parser.error("SPACE-2 requires --concurrency 1")
+    if args.provider in ("space-2", "nli") and args.concurrency != 1:
+        parser.error(f"{args.provider} requires --concurrency 1")
+    if args.batch_size < 1:
+        parser.error("--batch-size must be at least 1")
     if args.output is None:
         if args.provider == "typesafe":
             slug = JEV_MODEL
         elif args.provider == "space-2":
             slug = config.space2_model
         else:
-            slug = zeroshot.SLUG
+            slug = nli.SLUG
         args.output = ROOT / "runs" / config.benchmark / f"{args.provider}-{slug}"
     return args
 
@@ -202,11 +230,12 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
     )
     rows, labels = loader(dataset, tuple(manifest["label_mapping"]))
     validate_dataset(rows, config)
+    nli_manifest: dict[str, Any] | None = None
     if args.provider == "typesafe":
         load_dotenv(ROOT / ".env")
         provider: Provider = TypeSafeProvider(JEV_MODEL)
         run_manifest = None
-    else:
+    elif args.provider == "space-2":
         paths = validate_release(args.space2_dir, manifest)
         mapping = tuple(manifest["label_mapping"])
         validate_alignment(rows, labels, paths["author_test"], mapping, config)
@@ -218,6 +247,21 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
         )
         validate_smoke(provider, rows, labels, paths["author_test"], reference, mapping, config)
         run_manifest = manifest
+    else:
+        nli_manifest = nli.load_manifest(args.nli_manifest)
+        entry = nli.benchmark_entry(nli_manifest, config.benchmark)
+        nli.validate_labels(entry, labels)
+        provider = NliZeroShotProvider(
+            model=nli_manifest["model"],
+            revision=nli_manifest["revision"],
+            labels=labels,
+            verbalization=entry["verbalization"],
+            template=nli_manifest["hypothesis_template"],
+            max_length=nli_manifest["max_length"],
+            device=args.device,
+            batch_size=args.batch_size,
+        )
+        run_manifest = None
     try:
         result = run(
             rows,
@@ -230,6 +274,7 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
             limit=args.limit,
             resume=args.resume,
             concurrency=args.concurrency,
+            nli_manifest=nli_manifest,
         )
     finally:
         close = getattr(provider, "close", None)

@@ -12,12 +12,21 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from benchmarks import nli
 from benchmarks.metrics import noul_metrics
-from benchmarks.providers import Noul, NoulResult, Provider, TransformersNoulProvider, TypeSafeProvider
+from benchmarks.providers import (
+    NliZeroShotProvider,
+    Noul,
+    NoulResult,
+    Provider,
+    TransformersNoulProvider,
+    TypeSafeProvider,
+)
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 JEV_SCHEMA_VERSION = 2
 HUGGINGFACE_SCHEMA_VERSION = 1
+NLI_SCHEMA_VERSION = 1
 BENCHMARK = "sst2"
 DATASET_ID = "nyu-mll/glue"
 DATASET_CONFIG = "sst2"
@@ -51,7 +60,7 @@ def validate_dataset(dataset: Any) -> None:
         raise ValueError(f"SST-2 validation row digest mismatch: {actual}")
 
 
-def identity(provider: str) -> dict[str, Any]:
+def identity(provider: str, nli_manifest: dict[str, Any] | None = None) -> dict[str, Any]:
     value: dict[str, Any] = {
         "benchmark": BENCHMARK,
         "dataset": {
@@ -78,6 +87,9 @@ def identity(provider: str) -> dict[str, Any]:
                 "positive_label": POSITIVE_LABEL,
             }
         )
+    elif provider == "nli":
+        value["schema_version"] = NLI_SCHEMA_VERSION
+        value.update(nli.provider_identity(nli_manifest or nli.load_manifest(), "sst2"))
     else:
         raise ValueError(f"unsupported provider: {provider}")
     return value
@@ -107,6 +119,7 @@ def run(
     limit: int | None,
     resume: bool,
     concurrency: int,
+    nli_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     validate_dataset(dataset)
     if provider_name == "typesafe":
@@ -119,13 +132,20 @@ def run(
             "torch": version("torch"),
             "transformers": version("transformers"),
         }
+    elif provider_name == "nli":
+        slug = nli.SLUG
+        dependencies = {
+            "datasets": version("datasets"),
+            "torch": version("torch"),
+            "transformers": version("transformers"),
+        }
     else:
         raise ValueError(f"unsupported provider: {provider_name}")
     return run_benchmark(
         dataset,
         provider,
         output,
-        identity=identity(provider_name),
+        identity=identity(provider_name, nli_manifest),
         evaluate=evaluate_one,
         metrics=noul_metrics,
         result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{slug}.json",
@@ -138,17 +158,24 @@ def run(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("typesafe", "huggingface"), required=True)
+    parser.add_argument("--provider", choices=("typesafe", "huggingface", "nli"), required=True)
     add_run_arguments(parser)
+    parser.add_argument("--nli-manifest", type=Path, default=nli.DEFAULT_MANIFEST)
+    parser.add_argument("--device", default=None)
+    parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
+    if args.batch_size < 1:
+        parser.error("--batch-size must be at least 1")
+    if args.provider == "nli" and args.concurrency != 1:
+        parser.error("nli requires --concurrency 1")
     if args.output is None:
         if args.provider == "typesafe":
             slug = JEV_MODEL
         elif args.provider == "huggingface":
             slug = SLUG
         else:
-            slug = zeroshot.SLUG
+            slug = nli.SLUG
         args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{slug}"
     return args
 
@@ -158,11 +185,27 @@ def main(argv: list[str] | None = None) -> int:
     from datasets import load_dataset
 
     dataset = load_dataset(DATASET_ID, DATASET_CONFIG, revision=DATASET_REVISION, split=DATASET_SPLIT)
+    nli_manifest: dict[str, Any] | None = None
     if args.provider == "typesafe":
         load_dotenv(ROOT / ".env")
         provider: Provider = TypeSafeProvider(JEV_MODEL)
-    else:
+    elif args.provider == "huggingface":
         provider = TransformersNoulProvider(MODEL, MODEL_REVISION, POSITIVE_LABEL)
+    else:
+        manifest = nli.load_manifest(args.nli_manifest)
+        nli_manifest = manifest
+        entry = nli.benchmark_entry(manifest, BENCHMARK)
+        provider = NliZeroShotProvider(
+            model=manifest["model"],
+            revision=manifest["revision"],
+            labels=tuple(entry["labels"]),
+            verbalization=entry["verbalization"],
+            template=manifest["hypothesis_template"],
+            positive_label=POSITIVE_LABEL,
+            max_length=manifest["max_length"],
+            device=args.device,
+            batch_size=args.batch_size,
+        )
     try:
         result = run(
             dataset,
@@ -172,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             resume=args.resume,
             concurrency=args.concurrency,
+            nli_manifest=nli_manifest,
         )
     finally:
         close = getattr(provider, "close", None)
