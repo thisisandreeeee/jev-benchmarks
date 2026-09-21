@@ -29,17 +29,17 @@
     "schema_version": 1
   },
   "metrics": {
-    "pearson": 0.8927045978916447,
-    "spearman": 0.8911817303943987
+    "pearson": 0.8931763922894023,
+    "spearman": 0.8920610199975396
   },
   "provider_statistics": {
-    "mean_confidence": 0.7155112400290066,
+    "mean_confidence": 0.7158230601885425,
     "usage": {
       "input_tokens": 562883,
       "output_tokens": 23443
     }
   },
   "repository_clean": false,
-  "repository_revision": "71132fd2dfa4dbc893ab255a3080a5a5e6b0bebd",
+  "repository_revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c",
   "total": 1379
 }
