@@ -12,8 +12,9 @@ from typing import Any, Callable
 
 from dotenv import load_dotenv
 
+from benchmarks import kev
 from benchmarks.metrics import classification_metrics
-from benchmarks.providers import Choice, ChoiceResult, Provider, Space2Provider, TypeSafeProvider
+from benchmarks.providers import Choice, ChoiceResult, Provider, Space2Provider, SystemOneProvider
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 from benchmarks.space2_release import (
     author_rows,
@@ -90,6 +91,8 @@ def identity(
     }
     if provider == "typesafe":
         value.update({"provider": "typesafe", "model": JEV_MODEL})
+    elif provider == "kev":
+        value.update(kev.identity(config.benchmark))
     elif provider == "space-2" and manifest is not None:
         value.update(
             {
@@ -147,9 +150,9 @@ def run(
         if resume and predictions.exists():
             completed = {json.loads(line)["dataset_id"] for line in predictions.read_text().splitlines()}
         prepare([rows[index]["text"] for index in range(stop) if index not in completed])
-    slug = JEV_MODEL if provider_name == "typesafe" else config.space2_model
+    slug = JEV_MODEL if provider_name == "typesafe" else kev.SLUG if provider_name == "kev" else config.space2_model
     dependencies = {"datasets": version("datasets")}
-    if provider_name == "typesafe":
+    if provider_name in {"typesafe", "kev"}:
         dependencies["typesafe-sdk"] = version("typesafe-sdk")
     else:
         dependencies.update({"torch": version("torch"), "transformers": version("transformers")})
@@ -169,17 +172,17 @@ def run(
 
 
 def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=f"Run {config.benchmark} with SPACE-2 or TypeSafe Jev.")
-    parser.add_argument("--provider", choices=("typesafe", "space-2"), required=True)
+    parser = argparse.ArgumentParser(description=f"Run {config.benchmark} with SPACE-2, TypeSafe Jev, or KEV.")
+    parser.add_argument("--provider", choices=("typesafe", "space-2", "kev"), required=True)
     add_run_arguments(parser)
     parser.add_argument("--manifest", type=Path, default=config.manifest)
     parser.add_argument("--space2-dir", type=Path, default=DEFAULT_SPACE2_DIR)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
-    if args.provider == "space-2" and args.concurrency != 1:
-        parser.error("SPACE-2 requires --concurrency 1")
+    if args.provider in {"space-2", "kev"} and args.concurrency != 1:
+        parser.error(f"{args.provider} requires --concurrency 1")
     if args.output is None:
-        slug = JEV_MODEL if args.provider == "typesafe" else config.space2_model
+        slug = JEV_MODEL if args.provider == "typesafe" else kev.SLUG if args.provider == "kev" else config.space2_model
         args.output = ROOT / "runs" / config.benchmark / args.provider / slug
     return args
 
@@ -199,7 +202,10 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
     validate_dataset(rows, config)
     if args.provider == "typesafe":
         load_dotenv(ROOT / ".env")
-        provider: Provider = TypeSafeProvider(JEV_MODEL)
+        provider: Provider = SystemOneProvider(JEV_MODEL)
+        run_manifest = None
+    elif args.provider == "kev":
+        provider = kev.provider()
         run_manifest = None
     else:
         paths = validate_release(args.space2_dir, manifest)

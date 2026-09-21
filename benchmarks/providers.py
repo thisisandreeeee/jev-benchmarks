@@ -117,14 +117,30 @@ def _normalize_distribution(probabilities: dict[str, float], candidates: set[str
     return probabilities if total == 1.0 else {key: value / total for key, value in probabilities.items()}
 
 
-class TypeSafeProvider:
-    """Adapter for the first-party TypeSafe SDK."""
+class SystemOneProvider:
+    """Adapter for a TypeSafe-compatible System One endpoint."""
 
-    def __init__(self, model: str = "jev-1.13.0") -> None:
+    def __init__(
+        self,
+        model: str = "jev-1.13.0",
+        *,
+        provider_name: str = "typesafe",
+        api_key: str | None = None,
+        base_url: str | None = None,
+        timeout: float | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         from typesafe_sdk import TypeSafeClient
 
         self.model = model
-        self.client = TypeSafeClient(model=model)
+        self.provider_name = provider_name
+        self.metadata = metadata or {}
+        self.client = TypeSafeClient(
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
+            timeout=timeout,
+        )
 
     def close(self) -> None:
         self.client.close()
@@ -150,10 +166,11 @@ class TypeSafeProvider:
 
         confidence = getattr(answer, "confidence", None)
         metadata: dict[str, Any] = {
-            "provider": "typesafe",
+            "provider": self.provider_name,
             "model": response.model,
             "latency_ms": latency_ms,
             "usage": {key: value for key, value in response.usage.model_dump().items() if value is not None},
+            **self.metadata,
         }
         if confidence is not None:
             metadata["confidence"] = confidence

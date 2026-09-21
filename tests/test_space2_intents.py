@@ -112,7 +112,7 @@ def test_row_digest_is_order_and_label_sensitive():
     assert digest != space2_intents.row_digest([{**ROWS[0], "label": "two"}, ROWS[1]])
 
 
-def test_both_providers_share_dataset_identity_and_separate_paths():
+def test_providers_share_dataset_identity_and_separate_paths():
     manifest = {
         "repository": {},
         "paper": "paper",
@@ -121,12 +121,16 @@ def test_both_providers_share_dataset_identity_and_separate_paths():
         "label_mapping": list(LABELS),
         "manifest_sha256": "digest",
     }
-    jev = space2_intents.identity("typesafe", LABELS, CONFIG)
-    supervised = space2_intents.identity("space-2", LABELS, CONFIG, manifest)
-    assert jev["dataset"] == supervised["dataset"]
+    config = replace(CONFIG, benchmark="banking77")
+    jev = space2_intents.identity("typesafe", LABELS, config)
+    kev = space2_intents.identity("kev", LABELS, config)
+    supervised = space2_intents.identity("space-2", LABELS, config, manifest)
+    assert jev["dataset"] == kev["dataset"] == supervised["dataset"]
+    assert kev["model"] == "jaredpalmer/kev-4b"
     assert space2_intents.parse_args(CONFIG, ["--provider", "typesafe"]).output != space2_intents.parse_args(
         CONFIG, ["--provider", "space-2"]
     ).output
+    assert space2_intents.parse_args(CONFIG, ["--provider", "kev"]).output.name == "kev-4b"
 
 
 def test_complete_space2_run_publishes_to_provider_path(tmp_path: Path, monkeypatch):
@@ -207,3 +211,5 @@ def test_dataset_adapters_freeze_label_spaces_and_filters():
 def test_space2_rejects_parallel_runner():
     with pytest.raises(SystemExit):
         space2_intents.parse_args(CONFIG, ["--provider", "space-2", "--concurrency", "2"])
+    with pytest.raises(SystemExit):
+        space2_intents.parse_args(CONFIG, ["--provider", "kev", "--concurrency", "2"])
