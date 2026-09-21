@@ -53,8 +53,10 @@ def summarize(
     for record in records:
         for key, value in record["provider_metadata"].get("usage", {}).items():
             usage[key] = usage.get(key, 0) + value
+    # metrics.mean_confidence is derived from the result probabilities; this
+    # diagnostic is the mean confidence the provider reported about itself.
     run["provider_statistics"] = {
-        "mean_confidence": sum(confidences) / len(confidences) if confidences else None,
+        "mean_reported_confidence": sum(confidences) / len(confidences) if confidences else None,
         "usage": usage,
     }
 
