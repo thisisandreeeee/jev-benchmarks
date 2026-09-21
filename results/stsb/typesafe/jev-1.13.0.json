@@ -1,0 +1,45 @@
+{
+  "dependencies": {
+    "datasets": "5.0.1",
+    "typesafe-sdk": "0.7.0"
+  },
+  "evaluated": 1379,
+  "identity": {
+    "benchmark": "stsb",
+    "dataset": {
+      "config": "default",
+      "id": "mteb/stsbenchmark-sts",
+      "revision": "96943a16ea6a35129e253c659081cb59daf81b30",
+      "row_digest": "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060",
+      "rows": 1379,
+      "score_scale": "0..5",
+      "split": "test"
+    },
+    "instruction": "Rate the semantic similarity of the two sentences using the rubric.",
+    "model": "jev-1.13.0",
+    "provider": "typesafe",
+    "rubric": [
+      "The sentences are completely dissimilar.",
+      "The sentences are on the same topic but are not equivalent.",
+      "The sentences share some details but are not equivalent.",
+      "The sentences are roughly equivalent, but important information differs.",
+      "The sentences are mostly equivalent, with only minor differences.",
+      "The sentences are completely equivalent in meaning."
+    ],
+    "schema_version": 1
+  },
+  "metrics": {
+    "pearson": 0.8927045978916447,
+    "spearman": 0.8911817303943987
+  },
+  "provider_statistics": {
+    "mean_confidence": 0.7155112400290066,
+    "usage": {
+      "input_tokens": 562883,
+      "output_tokens": 23443
+    }
+  },
+  "repository_clean": false,
+  "repository_revision": "71132fd2dfa4dbc893ab255a3080a5a5e6b0bebd",
+  "total": 1379
+}

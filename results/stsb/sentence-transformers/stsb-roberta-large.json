@@ -1,0 +1,48 @@
+{
+  "dependencies": {
+    "datasets": "5.0.1",
+    "sentence-transformers": "5.7.0",
+    "torch": "2.8.0",
+    "transformers": "4.56.2"
+  },
+  "evaluated": 1379,
+  "identity": {
+    "benchmark": "stsb",
+    "dataset": {
+      "config": "default",
+      "id": "mteb/stsbenchmark-sts",
+      "revision": "96943a16ea6a35129e253c659081cb59daf81b30",
+      "row_digest": "3e30964a29dd599b3c30fe108303e6858340a9fd82a4ac2a1da33757411c4060",
+      "rows": 1379,
+      "score_scale": "0..5",
+      "split": "test"
+    },
+    "instruction": "Rate the semantic similarity of the two sentences using the rubric.",
+    "model": "cross-encoder/stsb-roberta-large",
+    "model_card": "https://huggingface.co/cross-encoder/stsb-roberta-large",
+    "model_revision": "2b12c2c0088918e76151fd5937b7bba986ef1f98",
+    "provider": "sentence-transformers",
+    "rubric": [
+      "The sentences are completely dissimilar.",
+      "The sentences are on the same topic but are not equivalent.",
+      "The sentences share some details but are not equivalent.",
+      "The sentences are roughly equivalent, but important information differs.",
+      "The sentences are mostly equivalent, with only minor differences.",
+      "The sentences are completely equivalent in meaning."
+    ],
+    "schema_version": 1,
+    "score": "cross_encoder_regression",
+    "score_scale": "0..1"
+  },
+  "metrics": {
+    "pearson": 0.9167036243387164,
+    "spearman": 0.9143588774772158
+  },
+  "provider_statistics": {
+    "mean_confidence": null,
+    "usage": {}
+  },
+  "repository_clean": false,
+  "repository_revision": "ec4d4702042376d985e2570d6993cb8ab82d7f1c",
+  "total": 1379
+}
