@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import math
 from typing import Any
 
@@ -13,6 +14,9 @@ from benchmarks.providers.contract import (
     NoulResult,
     Question,
 )
+
+DTYPE_CHOICES = ("fp32", "fp16", "bf16")
+DEFAULT_DTYPE = "fp32"
 
 
 def _nli_choice(entailment_logits: list[float], labels: tuple[str, ...]) -> ChoiceResult:
@@ -47,6 +51,28 @@ def _default_device() -> Any:
     return torch.device("cpu")
 
 
+def _resolve_dtype(dtype: str) -> Any:
+    """Return the autocast dtype for a name, or ``None`` for full precision."""
+    import torch
+
+    if dtype == "fp32":
+        return None
+    if dtype == "fp16":
+        return torch.float16
+    if dtype == "bf16":
+        return torch.bfloat16
+    raise ValueError(f"unsupported dtype: {dtype}")
+
+
+def _autocast(device: Any, dtype: Any) -> Any:
+    """Autocast context for a resolved device and dtype; a no-op for fp32."""
+    import torch
+
+    if dtype is None:
+        return contextlib.nullcontext()
+    return torch.autocast(device.type, dtype=dtype)
+
+
 class NliZeroShotProvider:
     """Local NLI cross-encoder exposed as a zero-shot Choice or Noul provider."""
 
@@ -61,6 +87,7 @@ class NliZeroShotProvider:
         positive_label: str | None = None,
         max_length: int = 512,
         device: str | None = None,
+        dtype: str = DEFAULT_DTYPE,
         batch_size: int = 16,
     ) -> None:
         import torch
@@ -74,18 +101,23 @@ class NliZeroShotProvider:
         self.positive_label = positive_label
         self.max_length = max_length
         self.batch_size = batch_size
+        self.dtype = dtype
         self.device = torch.device(device) if device is not None else _default_device()
+        if dtype == "fp16" and self.device.type == "cpu":
+            raise ValueError("fp16 is not supported on CPU; use bf16 or fp32")
+        self.autocast_dtype = _resolve_dtype(dtype)
         missing = [label for label in self.labels if label not in self.verbalization]
         if missing:
             raise ValueError(f"NLI provider has no verbalization for {missing}")
         if positive_label is not None and positive_label not in self.labels:
             raise ValueError("NLI positive label is not in the configured candidates")
-        print(f"loading {model}@{revision[:12]} on {self.device} ...", flush=True)
+        print(f"loading {model}@{revision[:12]} on {self.device} ({dtype}, batch {batch_size}) ...", flush=True)
         self.tokenizer = AutoTokenizer.from_pretrained(model, revision=revision)
         self.model = AutoModelForSequenceClassification.from_pretrained(model, revision=revision)
         self.model.to(self.device).eval()
         self.entailment_index = self._entailment_index(self.model.config.id2label)
         self.prepared: dict[str, ChoiceResult] = {}
+        self.execution = {"device": str(self.device), "dtype": dtype, "batch_size": batch_size}
 
     @staticmethod
     def _entailment_index(id2label: dict[Any, Any]) -> int:
@@ -113,7 +145,8 @@ class NliZeroShotProvider:
                     padding=True,
                 )
                 encoded = {key: value.to(self.device) for key, value in encoded.items()}
-                logits = self.model(**encoded).logits
+                with _autocast(self.device, self.autocast_dtype):
+                    logits = self.model(**encoded).logits
                 scores.extend(logits[:, self.entailment_index].float().cpu().tolist())
         return scores
 
@@ -123,6 +156,7 @@ class NliZeroShotProvider:
             "model": self.model_id,
             "revision": self.revision,
             "device": str(self.device),
+            "dtype": self.dtype,
             "batch_size": self.batch_size,
             "confidence": confidence,
         }

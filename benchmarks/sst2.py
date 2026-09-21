@@ -22,6 +22,7 @@ from benchmarks.providers import (
     TypeSafeProvider,
 )
 from benchmarks.providers import nli_manifest as nli
+from benchmarks.providers.nli import DEFAULT_DTYPE, DTYPE_CHOICES
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 JEV_SCHEMA_VERSION = 2
@@ -66,7 +67,7 @@ def validate_dataset(dataset: Any) -> None:
         raise ValueError(f"SST-2 validation row digest mismatch: {actual}")
 
 
-def identity(provider: str, nli_manifest: dict[str, Any] | None = None) -> dict[str, Any]:
+def identity(provider: str, nli_manifest: dict[str, Any] | None = None, execution: dict[str, Any] | None = None) -> dict[str, Any]:
     value: dict[str, Any] = {
         "benchmark": BENCHMARK,
         "dataset": {
@@ -98,6 +99,8 @@ def identity(provider: str, nli_manifest: dict[str, Any] | None = None) -> dict[
         value.update(nli.provider_identity(nli_manifest or nli.load_manifest(), "sst2"))
     else:
         raise ValueError(f"unsupported provider: {provider}")
+    if execution is not None:
+        value["execution"] = execution
     return value
 
 
@@ -133,7 +136,7 @@ def run(
         dataset,
         provider,
         output,
-        identity=identity(provider_name, nli_manifest),
+        identity=identity(provider_name, nli_manifest, getattr(provider, "execution", None)),
         evaluate=evaluate_one,
         metrics=noul_metrics,
         result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{binding.slug}.json",
@@ -150,11 +153,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     add_run_arguments(parser)
     parser.add_argument("--nli-manifest", type=Path, default=nli.DEFAULT_MANIFEST)
     parser.add_argument("--device", default=None)
+    parser.add_argument("--dtype", choices=DTYPE_CHOICES, default=DEFAULT_DTYPE)
     parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
     if args.batch_size < 1:
         parser.error("--batch-size must be at least 1")
+    if args.provider != "nli" and args.dtype != DEFAULT_DTYPE:
+        parser.error("--dtype applies only to the nli provider")
     binding = PROVIDERS[args.provider]
     if binding.concurrency is not None and args.concurrency != binding.concurrency:
         parser.error(f"{args.provider} requires --concurrency {binding.concurrency}")
@@ -187,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
             positive_label=POSITIVE_LABEL,
             max_length=manifest["max_length"],
             device=args.device,
+            dtype=args.dtype,
             batch_size=args.batch_size,
         )
     return cli.finish(

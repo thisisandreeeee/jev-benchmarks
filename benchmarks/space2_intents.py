@@ -22,6 +22,7 @@ from benchmarks.providers import (
     TypeSafeProvider,
 )
 from benchmarks.providers import nli_manifest as nli
+from benchmarks.providers.nli import DEFAULT_DTYPE, DTYPE_CHOICES
 from benchmarks.providers.space2_release import (
     load_manifest,
     validate_alignment,
@@ -99,6 +100,7 @@ def identity(
     config: IntentConfig,
     manifest: dict[str, Any] | None = None,
     nli_identity: dict[str, Any] | None = None,
+    execution: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     value: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -126,6 +128,8 @@ def identity(
         value.update(nli_identity)
     else:
         raise ValueError(f"unsupported provider: {provider}")
+    if execution is not None:
+        value["execution"] = execution
     return value
 
 
@@ -177,7 +181,14 @@ def run(
         rows,
         provider,
         output,
-        identity=identity(provider_name, labels, config, manifest, nli_identity),
+        identity=identity(
+            provider_name,
+            labels,
+            config,
+            manifest,
+            nli_identity,
+            execution=getattr(provider, "execution", None),
+        ),
         evaluate=lambda provider, row_id, row: evaluate_one(provider, row_id, row, labels, config.instruction),
         metrics=classification_metrics,
         result_path=ROOT / "results" / config.benchmark / f"{provider_name}-{binding.slug}.json",
@@ -197,6 +208,7 @@ def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.
     parser.add_argument("--space2-dir", type=Path, default=DEFAULT_SPACE2_DIR)
     parser.add_argument("--nli-manifest", type=Path, default=nli.DEFAULT_MANIFEST)
     parser.add_argument("--device", default=None)
+    parser.add_argument("--dtype", choices=DTYPE_CHOICES, default=DEFAULT_DTYPE)
     parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
@@ -205,6 +217,8 @@ def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.
         parser.error(f"{args.provider} requires --concurrency {binding.concurrency}")
     if args.batch_size < 1:
         parser.error("--batch-size must be at least 1")
+    if args.provider != "nli" and args.dtype != DEFAULT_DTYPE:
+        parser.error("--dtype applies only to the nli provider")
     if args.output is None:
         args.output = ROOT / "runs" / config.benchmark / f"{args.provider}-{binding.slug}"
     return args
@@ -252,6 +266,7 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
             template=nli_manifest["hypothesis_template"],
             max_length=nli_manifest["max_length"],
             device=args.device,
+            dtype=args.dtype,
             batch_size=args.batch_size,
         )
         run_manifest = None

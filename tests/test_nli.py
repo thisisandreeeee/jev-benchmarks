@@ -56,6 +56,7 @@ def make_provider(labels, verbalization, table, positive_label=None):
     provider.positive_label = positive_label
     provider.max_length = 512
     provider.batch_size = 4
+    provider.dtype = "fp32"
     provider.device = "cpu"
     provider.prepared = {}
     provider._entailment_logits = lambda pairs: [table[hypothesis] for _, hypothesis in pairs]
