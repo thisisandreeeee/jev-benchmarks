@@ -184,7 +184,7 @@ def _space2_choice(logits: list[float], labels: tuple[str, ...]) -> ChoiceResult
     return ChoiceResult(max(probabilities, key=probabilities.get), probabilities)
 
 
-def _load_space2_model(checkpoint: str):
+def _load_space2_model(checkpoint: str, num_labels: int):
     """Construct the released intent architecture without its legacy training stack."""
     import torch
     from torch import nn
@@ -249,7 +249,7 @@ def _load_space2_model(checkpoint: str):
             self.embedder = Embedder()
             self.embed_layer_norm = nn.LayerNorm(768, eps=1e-12)
             self.layers = nn.ModuleList(Block() for _ in range(12))
-            self.intent_classifier = nn.Linear(768, 77)
+            self.intent_classifier = nn.Linear(768, num_labels)
 
         def forward(self, token):
             position = torch.arange(token.shape[1]).unsqueeze(0).expand_as(token)
@@ -278,7 +278,7 @@ def _load_space2_model(checkpoint: str):
 
 
 class Space2Provider:
-    """Released SPACE-2 BANKING77 checkpoint exposed as a Choice provider."""
+    """Released SPACE-2 intent checkpoint exposed as a Choice provider."""
 
     def __init__(self, checkpoint: str, vocab: str, labels: tuple[str, ...], checkpoint_sha256: str) -> None:
         from transformers import BertTokenizer
@@ -286,7 +286,8 @@ class Space2Provider:
         self.labels = labels
         self.checkpoint_sha256 = checkpoint_sha256
         self.tokenizer = BertTokenizer(vocab_file=vocab, do_lower_case=True)
-        self.model = _load_space2_model(checkpoint)
+        self.model_name = checkpoint.rsplit("/", 1)[-1].removesuffix(".model")
+        self.model = _load_space2_model(checkpoint, len(labels))
         self.prepared: dict[str, ChoiceResult] = {}
 
     def _tokens(self, state: str) -> list[int]:
@@ -326,7 +327,7 @@ class Space2Provider:
             result,
             {
                 "provider": "space-2",
-                "model": "state_epoch_51",
+                "model": self.model_name,
                 "checkpoint_sha256": self.checkpoint_sha256,
                 "confidence": max(result.probabilities.values()),
             },
