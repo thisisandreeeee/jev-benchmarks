@@ -9,7 +9,7 @@
   },
   "code": {
     "clean": false,
-    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+    "revision": "7d802a43d3bda81291a234b7495875217a2bc775"
   },
   "dataset": {
     "config": "default",
@@ -111,7 +111,7 @@
       "provider": "typesafe",
       "schema_version": 1
     },
-    "path": "runs/hwu64/typesafe/jev-1.13.0",
+    "path": "runs/hwu64/typesafe-jev-1.13.0",
     "predictions_sha256": "658498a8331675cd8b959955f62a3e482b100079aae5c89c2a9c65007383c1c0",
     "run_sha256": "7a4f84b34ae4449d1b78c583e45400adde67e7f9508de6aa23755f27c2af52ab",
     "score": 0.8308550185873605
@@ -294,7 +294,7 @@
       },
       "schema_version": 1
     },
-    "path": "runs/hwu64/space-2/state_epoch_25",
+    "path": "runs/hwu64/space-2-state_epoch_25",
     "predictions_sha256": "0c7f9b0487cde76b2fa80eba42f503dbf253559ba3891b14b4cf007a086f21e9",
     "run_sha256": "97c9ac253348c3366b6449ccd73181bb2b93c37751c9a604b6420330534dcab8",
     "score": 0.9423791821561338

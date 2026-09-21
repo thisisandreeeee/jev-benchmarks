@@ -9,7 +9,7 @@
   },
   "code": {
     "clean": false,
-    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+    "revision": "7d802a43d3bda81291a234b7495875217a2bc775"
   },
   "dataset": {
     "config": "default",
@@ -53,7 +53,7 @@
       ],
       "schema_version": 1
     },
-    "path": "runs/stsb/typesafe/jev-1.13.0",
+    "path": "runs/stsb/typesafe-jev-1.13.0",
     "predictions_sha256": "31780fedc5cef4eeb765db8b86a73fceceb33438138a54b38a96785b31cc2cbb",
     "run_sha256": "2969b00f7769416aa78c8404bc40b620db63ffd06019186cd15d82e0e2b8e7ab",
     "score": 0.8920610199975396
@@ -89,7 +89,7 @@
       "score": "cross_encoder_regression",
       "score_scale": "0..1"
     },
-    "path": "runs/stsb/sentence-transformers/stsb-roberta-large",
+    "path": "runs/stsb/sentence-transformers-stsb-roberta-large",
     "predictions_sha256": "5427fe39ae9f913d1e3e179775e6c192c9c3240f05cceb4661e67a92cda589db",
     "run_sha256": "bc29107fa17b582c53240d66b6f2a97c3150b6c9b3f9227ba893db89487be5ab",
     "score": 0.9143588774772158

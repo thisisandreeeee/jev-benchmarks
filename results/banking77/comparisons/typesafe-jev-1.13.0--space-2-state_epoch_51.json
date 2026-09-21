@@ -9,7 +9,7 @@
   },
   "code": {
     "clean": false,
-    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+    "revision": "7d802a43d3bda81291a234b7495875217a2bc775"
   },
   "dataset": {
     "id": "PolyAI/banking77",
@@ -120,7 +120,7 @@
       "provider": "typesafe",
       "schema_version": 1
     },
-    "path": "runs/banking77/typesafe/jev-1.13.0",
+    "path": "runs/banking77/typesafe-jev-1.13.0",
     "predictions_sha256": "61efe70062270bd3c568006299550a80c7151fc28941d3bb5d4c057e04f36dd0",
     "run_sha256": "6d44dd6287080b25b45895e00299c3b35f9a5d66384070e8a54e607bd3cf243e",
     "score": 0.799025974025974
@@ -325,7 +325,7 @@
       },
       "schema_version": 1
     },
-    "path": "runs/banking77/space-2/state_epoch_51",
+    "path": "runs/banking77/space-2-state_epoch_51",
     "predictions_sha256": "609cedf6aeb59c7bc6f4d1817001f7e69bd8cb547bfb27c06249697b7351e26f",
     "run_sha256": "46842a53bec7d1d4208d60a882ed89c2e0693e3e776676ac298cf9f14221dc44",
     "score": 0.9477272727272728

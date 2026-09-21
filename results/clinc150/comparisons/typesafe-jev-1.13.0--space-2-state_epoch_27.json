@@ -9,7 +9,7 @@
   },
   "code": {
     "clean": false,
-    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+    "revision": "7d802a43d3bda81291a234b7495875217a2bc775"
   },
   "dataset": {
     "config": "plus",
@@ -197,7 +197,7 @@
       "provider": "typesafe",
       "schema_version": 1
     },
-    "path": "runs/clinc150/typesafe/jev-1.13.0",
+    "path": "runs/clinc150/typesafe-jev-1.13.0",
     "predictions_sha256": "fc23d7d33ce318ffe8d68441535fdbfc6a3a2630816c2f2e64a251237b0b975e",
     "run_sha256": "752a648b97c3245093153487b7a9a3a9b1c2687f3514749d950c169903f5b95e",
     "score": 0.9195555555555556
@@ -551,7 +551,7 @@
       },
       "schema_version": 1
     },
-    "path": "runs/clinc150/space-2/state_epoch_27",
+    "path": "runs/clinc150/space-2-state_epoch_27",
     "predictions_sha256": "c1030906bbd7719a9961d295b35c6fb921b65191011e896c358d9b94b2ef0b26",
     "run_sha256": "ff8027197e15383086129a47a5facc3e5237b51996e9964747749eea80fae94c",
     "score": 0.978

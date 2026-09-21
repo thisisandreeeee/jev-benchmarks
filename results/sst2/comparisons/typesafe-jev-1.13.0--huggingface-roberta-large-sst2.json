@@ -9,7 +9,7 @@
   },
   "code": {
     "clean": false,
-    "revision": "ebb1aeb3d85acdf083bbba6f807e2c3dc31be20c"
+    "revision": "7d802a43d3bda81291a234b7495875217a2bc775"
   },
   "dataset": {
     "config": "sst2",
@@ -40,7 +40,7 @@
       "provider": "typesafe",
       "schema_version": 2
     },
-    "path": "runs/sst2/typesafe/jev-1.13.0",
+    "path": "runs/sst2/typesafe-jev-1.13.0",
     "predictions_sha256": "70a56357866d8c9f57e9d87b01c4be1dd24c40daa8685bba13a01712b332a614",
     "run_sha256": "5bf7dfcd524096d7278954226b9b4795f77e7a61558ac0fe0b857ac5d392019b",
     "score": 0.944954128440367
@@ -70,7 +70,7 @@
       "provider": "huggingface-local",
       "schema_version": 1
     },
-    "path": "runs/sst2/huggingface/roberta-large-sst2",
+    "path": "runs/sst2/huggingface-roberta-large-sst2",
     "predictions_sha256": "ae8189282d2dab59481081041ae289c9bff97ba10235aa4962b1dfb0ece3c77c",
     "run_sha256": "e1f3486caba13ca5900e332a26b601685bd9a46d435bee2c6d768c9d57b2e8ea",
     "score": 0.9644495412844036
