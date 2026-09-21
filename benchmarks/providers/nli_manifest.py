@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "manifests" / "nli-labels.json"
 SLUG = "deberta-v3-large-zeroshot-v2.0"
 EXPECTED_NORMALIZATION = "softmax_over_candidates_of_entailment_logits"

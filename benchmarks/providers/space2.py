@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from benchmarks.providers import Choice, ChoiceResult, Inference, Question
+from benchmarks.providers.contract import Choice, ChoiceResult, Inference, Question
 
 
 def _space2_choice(logits: list[float], labels: tuple[str, ...]) -> ChoiceResult:

@@ -6,13 +6,12 @@ import argparse
 import hashlib
 import json
 from dataclasses import dataclass, field
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Callable
 
 from dotenv import load_dotenv
 
-from benchmarks import nli
+from benchmarks import cli
 from benchmarks.metrics import classification_metrics
 from benchmarks.providers import (
     Choice,
@@ -22,15 +21,15 @@ from benchmarks.providers import (
     Space2Provider,
     TypeSafeProvider,
 )
-from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
-from benchmarks.space2_release import (
-    author_rows,
+from benchmarks.providers import nli_manifest as nli
+from benchmarks.providers.space2_release import (
     load_manifest,
     validate_alignment,
     validate_reference_predictions,
     validate_release,
     validate_smoke,
 )
+from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SPACE2_DIR = ROOT / ".cache" / "space2"
@@ -57,6 +56,14 @@ class IntentConfig:
 
 
 Loader = Callable[[Any, tuple[str, ...]], tuple[list[dict[str, str]], tuple[str, ...]]]
+
+
+def provider_bindings(config: IntentConfig) -> dict[str, cli.ProviderBinding]:
+    return {
+        "typesafe": cli.ProviderBinding(JEV_MODEL, "typesafe"),
+        "space-2": cli.ProviderBinding(config.space2_model, "transformers", concurrency=1),
+        "nli": cli.ProviderBinding(nli.SLUG, "transformers", concurrency=1),
+    }
 
 
 def row_digest(rows: Any) -> str:
@@ -162,17 +169,7 @@ def run(
         if resume and predictions.exists():
             completed = {json.loads(line)["dataset_id"] for line in predictions.read_text().splitlines()}
         prepare([rows[index]["text"] for index in range(stop) if index not in completed])
-    if provider_name == "typesafe":
-        slug = JEV_MODEL
-        dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
-    elif provider_name == "space-2":
-        slug = config.space2_model
-        dependencies = {"datasets": version("datasets"), "torch": version("torch"), "transformers": version("transformers")}
-    elif provider_name == "nli":
-        slug = nli.SLUG
-        dependencies = {"datasets": version("datasets"), "torch": version("torch"), "transformers": version("transformers")}
-    else:
-        raise ValueError(f"unsupported provider: {provider_name}")
+    binding = provider_bindings(config)[provider_name]
     nli_identity = (
         nli.provider_identity(nli_manifest, config.benchmark) if nli_manifest is not None else None
     )
@@ -183,17 +180,18 @@ def run(
         identity=identity(provider_name, labels, config, manifest, nli_identity),
         evaluate=lambda provider, row_id, row: evaluate_one(provider, row_id, row, labels, config.instruction),
         metrics=classification_metrics,
-        result_path=ROOT / "results" / config.benchmark / f"{provider_name}-{slug}.json",
+        result_path=ROOT / "results" / config.benchmark / f"{provider_name}-{binding.slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
-        dependencies=dependencies,
+        dependencies=binding.dependencies(),
     )
 
 
 def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.Namespace:
+    bindings = provider_bindings(config)
     parser = argparse.ArgumentParser(description=f"Run {config.benchmark} with SPACE-2, zero-shot NLI, or TypeSafe Jev.")
-    parser.add_argument("--provider", choices=("typesafe", "space-2", "nli"), required=True)
+    parser.add_argument("--provider", choices=tuple(bindings), required=True)
     add_run_arguments(parser)
     parser.add_argument("--manifest", type=Path, default=config.manifest)
     parser.add_argument("--space2-dir", type=Path, default=DEFAULT_SPACE2_DIR)
@@ -202,18 +200,13 @@ def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.
     parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
-    if args.provider in ("space-2", "nli") and args.concurrency != 1:
-        parser.error(f"{args.provider} requires --concurrency 1")
+    binding = bindings[args.provider]
+    if binding.concurrency is not None and args.concurrency != binding.concurrency:
+        parser.error(f"{args.provider} requires --concurrency {binding.concurrency}")
     if args.batch_size < 1:
         parser.error("--batch-size must be at least 1")
     if args.output is None:
-        if args.provider == "typesafe":
-            slug = JEV_MODEL
-        elif args.provider == "space-2":
-            slug = config.space2_model
-        else:
-            slug = nli.SLUG
-        args.output = ROOT / "runs" / config.benchmark / f"{args.provider}-{slug}"
+        args.output = ROOT / "runs" / config.benchmark / f"{args.provider}-{binding.slug}"
     return args
 
 
@@ -262,8 +255,9 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
             batch_size=args.batch_size,
         )
         run_manifest = None
-    try:
-        result = run(
+    return cli.finish(
+        provider,
+        lambda: run(
             rows,
             labels,
             provider,
@@ -275,10 +269,5 @@ def main(config: IntentConfig, loader: Loader, argv: list[str] | None = None) ->
             resume=args.resume,
             concurrency=args.concurrency,
             nli_manifest=nli_manifest,
-        )
-    finally:
-        close = getattr(provider, "close", None)
-        if close is not None:
-            close()
-    print(json.dumps({"status": result["status"], "evaluated": result["evaluated"], **result["metrics"]}, indent=2))
-    return 0
+        ),
+    )

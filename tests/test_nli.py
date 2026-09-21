@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import banking77, sst2, space2_intents, nli
+from benchmarks import banking77, sst2, space2_intents
 from benchmarks.providers import (
     Choice,
     NliZeroShotProvider,
@@ -11,6 +11,7 @@ from benchmarks.providers import (
     _nli_choice,
     _nli_noul,
 )
+from benchmarks.providers import nli_manifest as nli
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = nli.load_manifest()

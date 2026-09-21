@@ -354,7 +354,10 @@ def test_cli_module_does_not_import_a_model_sdk_or_provider():
         "sentence_transformers",
         "typesafe_sdk",
         "benchmarks.providers",
-        "benchmarks.space2_provider",
+        "benchmarks.providers.contract",
+        "benchmarks.providers.nli",
+        "benchmarks.providers.space2",
+        "benchmarks.cli",
         "benchmarks.sst2",
         "benchmarks.stsb",
     }

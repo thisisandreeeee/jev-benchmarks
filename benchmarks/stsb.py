@@ -6,12 +6,12 @@ import argparse
 import hashlib
 import json
 import sys
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Callable
 
 from dotenv import load_dotenv
 
+from benchmarks import cli
 from benchmarks.metrics import similarity_metrics
 from benchmarks.providers import (
     Provider,
@@ -46,6 +46,11 @@ RUBRIC = (
     "The sentences are mostly equivalent, with only minor differences.",
     "The sentences are completely equivalent in meaning.",
 )
+
+PROVIDERS = {
+    "sentence-transformers": cli.ProviderBinding(SLUG, "sentence-transformers"),
+    "typesafe": cli.ProviderBinding(JEV_MODEL, "typesafe"),
+}
 
 
 def row_digest(dataset: Any) -> str:
@@ -141,19 +146,9 @@ def run(
     evaluate: Callable[..., dict[str, Any]]
     if provider_name == "sentence-transformers":
         evaluate = evaluate_sentence_transformer
-        slug = SLUG
-        dependencies = {
-            "datasets": version("datasets"),
-            "sentence-transformers": version("sentence-transformers"),
-            "torch": version("torch"),
-            "transformers": version("transformers"),
-        }
-    elif provider_name == "typesafe":
-        evaluate = evaluate_typesafe
-        slug = JEV_MODEL
-        dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
     else:
-        raise ValueError(f"unsupported provider: {provider_name}")
+        evaluate = evaluate_typesafe
+    binding = PROVIDERS[provider_name]
     return run_benchmark(
         dataset,
         provider,
@@ -161,23 +156,22 @@ def run(
         identity=identity(provider_name),
         evaluate=evaluate,
         metrics=similarity_metrics,
-        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{slug}.json",
+        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{binding.slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
-        dependencies=dependencies,
+        dependencies=binding.dependencies(),
     )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("sentence-transformers", "typesafe"), required=True)
+    parser.add_argument("--provider", choices=tuple(PROVIDERS), required=True)
     add_run_arguments(parser)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
     if args.output is None:
-        slug = SLUG if args.provider == "sentence-transformers" else JEV_MODEL
-        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{slug}"
+        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{PROVIDERS[args.provider].slug}"
     return args
 
 
@@ -191,8 +185,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         load_dotenv(ROOT / ".env")
         provider = TypeSafeProvider(JEV_MODEL)
-    try:
-        result = run(
+    return cli.finish(
+        provider,
+        lambda: run(
             dataset,
             provider,
             args.provider,
@@ -200,18 +195,9 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             resume=args.resume,
             concurrency=args.concurrency,
-        )
-    finally:
-        close = getattr(provider, "close", None)
-        if close is not None:
-            close()
-    print(
-        json.dumps(
-            {"status": result["status"], "evaluated": result["evaluated"], "total": result["total"], **result["metrics"]},
-            indent=2,
-        )
+        ),
+        total=True,
     )
-    return 0
 
 
 if __name__ == "__main__":

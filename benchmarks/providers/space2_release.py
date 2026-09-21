@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from benchmarks.providers import Choice, ChoiceResult
+from benchmarks.providers.contract import Choice, ChoiceResult
 
 
 def _sha256(path: Path) -> str:

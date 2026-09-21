@@ -6,13 +6,12 @@ import argparse
 import hashlib
 import json
 import sys
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
-from benchmarks import nli
+from benchmarks import cli
 from benchmarks.metrics import noul_metrics
 from benchmarks.providers import (
     NliZeroShotProvider,
@@ -22,6 +21,7 @@ from benchmarks.providers import (
     TransformersNoulProvider,
     TypeSafeProvider,
 )
+from benchmarks.providers import nli_manifest as nli
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 JEV_SCHEMA_VERSION = 2
@@ -42,6 +42,12 @@ MODEL_CARD = f"https://huggingface.co/{MODEL}"
 POSITIVE_LABEL = "positive"
 SLUG = "roberta-large-sst2"
 ROOT = Path(__file__).resolve().parents[1]
+
+PROVIDERS = {
+    "typesafe": cli.ProviderBinding(JEV_MODEL, "typesafe"),
+    "huggingface": cli.ProviderBinding(SLUG, "transformers"),
+    "nli": cli.ProviderBinding(nli.SLUG, "transformers", concurrency=1),
+}
 
 
 def row_digest(dataset: Any) -> str:
@@ -122,25 +128,7 @@ def run(
     nli_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     validate_dataset(dataset)
-    if provider_name == "typesafe":
-        slug = JEV_MODEL
-        dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
-    elif provider_name == "huggingface":
-        slug = SLUG
-        dependencies = {
-            "datasets": version("datasets"),
-            "torch": version("torch"),
-            "transformers": version("transformers"),
-        }
-    elif provider_name == "nli":
-        slug = nli.SLUG
-        dependencies = {
-            "datasets": version("datasets"),
-            "torch": version("torch"),
-            "transformers": version("transformers"),
-        }
-    else:
-        raise ValueError(f"unsupported provider: {provider_name}")
+    binding = PROVIDERS[provider_name]
     return run_benchmark(
         dataset,
         provider,
@@ -148,17 +136,17 @@ def run(
         identity=identity(provider_name, nli_manifest),
         evaluate=evaluate_one,
         metrics=noul_metrics,
-        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{slug}.json",
+        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{binding.slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
-        dependencies=dependencies,
+        dependencies=binding.dependencies(),
     )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("typesafe", "huggingface", "nli"), required=True)
+    parser.add_argument("--provider", choices=tuple(PROVIDERS), required=True)
     add_run_arguments(parser)
     parser.add_argument("--nli-manifest", type=Path, default=nli.DEFAULT_MANIFEST)
     parser.add_argument("--device", default=None)
@@ -167,16 +155,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     validate_run_arguments(parser, args)
     if args.batch_size < 1:
         parser.error("--batch-size must be at least 1")
-    if args.provider == "nli" and args.concurrency != 1:
-        parser.error("nli requires --concurrency 1")
+    binding = PROVIDERS[args.provider]
+    if binding.concurrency is not None and args.concurrency != binding.concurrency:
+        parser.error(f"{args.provider} requires --concurrency {binding.concurrency}")
     if args.output is None:
-        if args.provider == "typesafe":
-            slug = JEV_MODEL
-        elif args.provider == "huggingface":
-            slug = SLUG
-        else:
-            slug = nli.SLUG
-        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{slug}"
+        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{binding.slug}"
     return args
 
 
@@ -206,8 +189,9 @@ def main(argv: list[str] | None = None) -> int:
             device=args.device,
             batch_size=args.batch_size,
         )
-    try:
-        result = run(
+    return cli.finish(
+        provider,
+        lambda: run(
             dataset,
             provider,
             args.provider,
@@ -216,18 +200,9 @@ def main(argv: list[str] | None = None) -> int:
             resume=args.resume,
             concurrency=args.concurrency,
             nli_manifest=nli_manifest,
-        )
-    finally:
-        close = getattr(provider, "close", None)
-        if close is not None:
-            close()
-    print(
-        json.dumps(
-            {"status": result["status"], "evaluated": result["evaluated"], "total": result["total"], **result["metrics"]},
-            indent=2,
-        )
+        ),
+        total=True,
     )
-    return 0
 
 
 if __name__ == "__main__":
