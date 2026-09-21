@@ -7,17 +7,17 @@ or fine-tune them.
 
 ## Results
 
-All scores use a 0–100 scale. Δ is Jev minus the supervised baseline. The
-interval is a paired percentile 95% bootstrap over the evaluation rows; each Δ
-links to its comparison artifact.
+All scores use a 0–100 scale. The Δ 95% CI is a paired percentile 95% bootstrap
+interval for Jev minus the supervised baseline over the evaluation rows; each
+interval links to its comparison artifact.
 
-| Benchmark | Rows  | Supervised checkpoint              | Metric   |                                                            Baseline |                                                 Jev |                                                                       Δ | Δ 95% CI         |
-| --------- | ----- | ---------------------------------- | -------- | -------------------------------------------------------------------: | ---------------------------------------------------: | -----------------------------------------------------------------------: | ---------------- |
-| BANKING77 | 3,080 | SPACE-2 `state_epoch_51`           | Accuracy |              [94.77](results/banking77/space-2/state_epoch_51.json) | [79.90](results/banking77/typesafe/jev-1.13.0.json) | [−14.87](results/banking77/comparisons/jev-1.13.0--state_epoch_51.json) | [−16.27, −13.47] |
-| CLINC150  | 4,500 | SPACE-2 `state_epoch_27`           | Accuracy |               [97.80](results/clinc150/space-2/state_epoch_27.json) |  [91.96](results/clinc150/typesafe/jev-1.13.0.json) |   [−5.84](results/clinc150/comparisons/jev-1.13.0--state_epoch_27.json) | [−6.64, −5.07]   |
-| HWU64     | 1,076 | SPACE-2 `state_epoch_25`           | Accuracy |                  [94.24](results/hwu64/space-2/state_epoch_25.json) |     [83.09](results/hwu64/typesafe/jev-1.13.0.json) |     [−11.15](results/hwu64/comparisons/jev-1.13.0--state_epoch_25.json) | [−13.38, −9.01]  |
-| SST-2     | 872   | `philschmid/roberta-large-sst2`    | Accuracy |           [96.44](results/sst2/huggingface/roberta-large-sst2.json) |      [94.50](results/sst2/typesafe/jev-1.13.0.json) |   [−1.95](results/sst2/comparisons/jev-1.13.0--roberta-large-sst2.json) | [−3.44, −0.46]   |
-| STS-B     | 1,379 | `cross-encoder/stsb-roberta-large` | Spearman | [91.44](results/stsb/sentence-transformers/stsb-roberta-large.json) |      [89.21](results/stsb/typesafe/jev-1.13.0.json) |   [−2.23](results/stsb/comparisons/jev-1.13.0--stsb-roberta-large.json) | [−3.36, −1.10]   |
+| Benchmark | Jev task | Rows  | Supervised checkpoint              | Metric   |                                                            Baseline |                                                 Jev | Δ 95% CI                                                                        |
+| --------- | -------- | ----- | ---------------------------------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | ------------------------------------------------------------------------------- |
+| BANKING77 | Choice   | 3,080 | SPACE-2 `state_epoch_51`           | Accuracy |              [94.77](results/banking77/space-2/state_epoch_51.json) | [79.90](results/banking77/typesafe/jev-1.13.0.json) | [−16.27, −13.47](results/banking77/comparisons/jev-1.13.0--state_epoch_51.json) |
+| CLINC150  | Choice   | 4,500 | SPACE-2 `state_epoch_27`           | Accuracy |               [97.80](results/clinc150/space-2/state_epoch_27.json) |  [91.96](results/clinc150/typesafe/jev-1.13.0.json) | [−6.64, −5.07](results/clinc150/comparisons/jev-1.13.0--state_epoch_27.json)    |
+| HWU64     | Choice   | 1,076 | SPACE-2 `state_epoch_25`           | Accuracy |                  [94.24](results/hwu64/space-2/state_epoch_25.json) |     [83.09](results/hwu64/typesafe/jev-1.13.0.json) | [−13.38, −9.01](results/hwu64/comparisons/jev-1.13.0--state_epoch_25.json)      |
+| SST-2     | Noul     | 872   | `philschmid/roberta-large-sst2`    | Accuracy |           [96.44](results/sst2/huggingface/roberta-large-sst2.json) |      [94.50](results/sst2/typesafe/jev-1.13.0.json) | [−3.44, −0.46](results/sst2/comparisons/jev-1.13.0--roberta-large-sst2.json)    |
+| STS-B     | Score    | 1,379 | `cross-encoder/stsb-roberta-large` | Spearman | [91.44](results/stsb/sentence-transformers/stsb-roberta-large.json) |      [89.21](results/stsb/typesafe/jev-1.13.0.json) | [−3.36, −1.10](results/stsb/comparisons/jev-1.13.0--stsb-roberta-large.json)    |
 
 See [EVALUATION.md](EVALUATION.md) for definitions, provenance requirements,
 and limitations.
