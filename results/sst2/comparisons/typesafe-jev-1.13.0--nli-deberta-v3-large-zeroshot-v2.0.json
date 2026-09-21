@@ -1,0 +1,93 @@
+{
+  "benchmark": "sst2",
+  "bootstrap": {
+    "confidence_level": 0.95,
+    "excluded_samples": 0,
+    "method": "paired-percentile",
+    "samples": 100000,
+    "seed": 12345
+  },
+  "code": {
+    "clean": false,
+    "revision": "d3a83b8e355b306b7ed4d646f1b7675584b5ee96"
+  },
+  "dataset": {
+    "config": "sst2",
+    "id": "nyu-mll/glue",
+    "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+    "row_digest": "b85e9210b8507d7c79e2b9d5220d4c4152e6f9c19349504318523acc74ec8c3e",
+    "rows": 872,
+    "split": "validation"
+  },
+  "difference": {
+    "interval": {
+      "lower": -0.0022935779816513763,
+      "upper": 0.03211009174311927
+    },
+    "label": "left_minus_right",
+    "value": 0.014908256880733939
+  },
+  "left": {
+    "identity": {
+      "benchmark": "sst2",
+      "dataset": {
+        "config": "sst2",
+        "id": "nyu-mll/glue",
+        "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+        "row_digest": "b85e9210b8507d7c79e2b9d5220d4c4152e6f9c19349504318523acc74ec8c3e",
+        "rows": 872,
+        "split": "validation"
+      },
+      "instruction": "Does this movie-review sentence express positive sentiment?",
+      "model": "jev-1.13.0",
+      "positive_outcome": "positive",
+      "provider": "typesafe",
+      "schema_version": 2
+    },
+    "path": "runs/sst2/typesafe-jev-1.13.0",
+    "predictions_sha256": "70a56357866d8c9f57e9d87b01c4be1dd24c40daa8685bba13a01712b332a614",
+    "run_sha256": "0e8fcf223d622600809eb3de8944a8c450c1e7a3b09fc8b82658b6a0c133753e",
+    "score": 0.944954128440367
+  },
+  "metric": "accuracy",
+  "outcomes": {
+    "both_correct": 787,
+    "both_wrong": 24,
+    "left_only": 37,
+    "right_only": 24
+  },
+  "right": {
+    "identity": {
+      "benchmark": "sst2",
+      "dataset": {
+        "config": "sst2",
+        "id": "nyu-mll/glue",
+        "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+        "row_digest": "b85e9210b8507d7c79e2b9d5220d4c4152e6f9c19349504318523acc74ec8c3e",
+        "rows": 872,
+        "split": "validation"
+      },
+      "entailment_label": "entailment",
+      "hypothesis_template": "This text is about {}",
+      "instruction": "Does this movie-review sentence express positive sentiment?",
+      "license": "mit",
+      "max_length": 512,
+      "model": "MoritzLaurer/deberta-v3-large-zeroshot-v2.0",
+      "model_card": "https://huggingface.co/MoritzLaurer/deberta-v3-large-zeroshot-v2.0",
+      "model_revision": "cf44676c28ba7312e5c5f8f8d2c22b3e0c9cdae2",
+      "normalization": "softmax_over_candidates_of_entailment_logits",
+      "positive_outcome": "positive",
+      "provider": "nli-zero-shot-local",
+      "schema_version": 1,
+      "verbalization_sha256": "5152c00359170b0d4fc59569615e92b55c7d2300554f942f98ac4ad674383d5e"
+    },
+    "path": "runs/sst2/nli-deberta-v3-large-zeroshot-v2.0",
+    "predictions_sha256": "9b901e2ad07f2954392e13867a34652080c2e22963dbdb3ca8dfaba4de27eca1",
+    "run_sha256": "4a79044b4626581cdcd54002127e258430207c836e3edd0d9fd36e87360a1567",
+    "score": 0.930045871559633
+  },
+  "row_digest": "dd5ac3ff6d6b82764596848824822006276abcfb7401d6c44078d01f852cfce4",
+  "rows": 872,
+  "schema_version": 1,
+  "split": "validation"
+}

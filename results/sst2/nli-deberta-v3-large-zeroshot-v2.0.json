@@ -1,0 +1,45 @@
+{
+  "dependencies": {
+    "datasets": "5.0.1",
+    "torch": "2.8.0",
+    "transformers": "4.56.2"
+  },
+  "evaluated": 872,
+  "identity": {
+    "benchmark": "sst2",
+    "dataset": {
+      "config": "sst2",
+      "id": "nyu-mll/glue",
+      "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+      "row_digest": "b85e9210b8507d7c79e2b9d5220d4c4152e6f9c19349504318523acc74ec8c3e",
+      "rows": 872,
+      "split": "validation"
+    },
+    "entailment_label": "entailment",
+    "hypothesis_template": "This text is about {}",
+    "instruction": "Does this movie-review sentence express positive sentiment?",
+    "license": "mit",
+    "max_length": 512,
+    "model": "MoritzLaurer/deberta-v3-large-zeroshot-v2.0",
+    "model_card": "https://huggingface.co/MoritzLaurer/deberta-v3-large-zeroshot-v2.0",
+    "model_revision": "cf44676c28ba7312e5c5f8f8d2c22b3e0c9cdae2",
+    "normalization": "softmax_over_candidates_of_entailment_logits",
+    "positive_outcome": "positive",
+    "provider": "nli-zero-shot-local",
+    "schema_version": 1,
+    "verbalization_sha256": "5152c00359170b0d4fc59569615e92b55c7d2300554f942f98ac4ad674383d5e"
+  },
+  "metrics": {
+    "accuracy": 0.930045871559633,
+    "expected_calibration_error": 0.04323589658502011,
+    "mean_confidence": 0.9666135657186166,
+    "negative_log_loss": 0.23037065077391455
+  },
+  "provider_statistics": {
+    "mean_reported_confidence": 0.9666135657186166,
+    "usage": {}
+  },
+  "repository_clean": false,
+  "repository_revision": "4b7ad32aff241bce333eaa337b4c94848ecb990d",
+  "total": 872
+}
