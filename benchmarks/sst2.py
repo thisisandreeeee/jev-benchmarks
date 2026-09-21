@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from importlib.metadata import version
@@ -13,7 +14,7 @@ from dotenv import load_dotenv
 
 from benchmarks.metrics import noul_metrics
 from benchmarks.providers import Noul, NoulResult, Provider, TransformersNoulProvider, TypeSafeProvider
-from benchmarks.runner import run_benchmark
+from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 JEV_SCHEMA_VERSION = 2
 HUGGINGFACE_SCHEMA_VERSION = 1
@@ -22,6 +23,8 @@ DATASET_ID = "nyu-mll/glue"
 DATASET_CONFIG = "sst2"
 DATASET_REVISION = "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c"
 DATASET_SPLIT = "validation"
+EXPECTED_ROWS = 872
+ROW_DIGEST = "b85e9210b8507d7c79e2b9d5220d4c4152e6f9c19349504318523acc74ec8c3e"
 INSTRUCTION = "Does this movie-review sentence express positive sentiment?"
 JEV_MODEL = "jev-1.13.0"
 MODEL = "philschmid/roberta-large-sst2"
@@ -32,6 +35,22 @@ SLUG = "roberta-large-sst2"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def row_digest(dataset: Any) -> str:
+    digest = hashlib.sha256()
+    for row in dataset:
+        digest.update(json.dumps([row["sentence"], row["label"]], separators=(",", ":")).encode())
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def validate_dataset(dataset: Any) -> None:
+    if len(dataset) != EXPECTED_ROWS:
+        raise ValueError(f"expected {EXPECTED_ROWS} SST-2 validation rows, got {len(dataset)}")
+    actual = row_digest(dataset)
+    if actual != ROW_DIGEST:
+        raise ValueError(f"SST-2 validation row digest mismatch: {actual}")
+
+
 def identity(provider: str) -> dict[str, Any]:
     value: dict[str, Any] = {
         "benchmark": BENCHMARK,
@@ -40,6 +59,8 @@ def identity(provider: str) -> dict[str, Any]:
             "config": DATASET_CONFIG,
             "revision": DATASET_REVISION,
             "split": DATASET_SPLIT,
+            "rows": EXPECTED_ROWS,
+            "row_digest": ROW_DIGEST,
         },
         "instruction": INSTRUCTION,
         "positive_outcome": "positive",
@@ -87,6 +108,7 @@ def run(
     resume: bool,
     concurrency: int,
 ) -> dict[str, Any]:
+    validate_dataset(dataset)
     if provider_name == "typesafe":
         slug = JEV_MODEL
         dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
@@ -117,15 +139,9 @@ def run(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--provider", choices=("typesafe", "huggingface"), required=True)
-    parser.add_argument("--limit", type=int)
-    parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--concurrency", type=int, default=1)
-    parser.add_argument("--output", type=Path)
+    add_run_arguments(parser)
     args = parser.parse_args(argv)
-    if args.limit is not None and args.limit < 1:
-        parser.error("--limit must be at least 1")
-    if args.concurrency < 1:
-        parser.error("--concurrency must be at least 1")
+    validate_run_arguments(parser, args)
     if args.output is None:
         slug = JEV_MODEL if args.provider == "typesafe" else SLUG
         args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
