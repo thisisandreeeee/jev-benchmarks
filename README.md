@@ -9,15 +9,17 @@ or fine-tune them.
 
 All scores use a 0–100 scale. The Δ 95% CI is a paired percentile 95% bootstrap
 interval for Jev minus the supervised baseline over the evaluation rows; each
-interval links to its comparison artifact.
+interval links to its comparison artifact. The Zero-shot column is the local
+`nli` NLI baseline (`MoritzLaurer/deberta-v3-large-zeroshot-v2.0`); an em dash
+means it has not been evaluated on that benchmark yet.
 
-| Benchmark | Jev task | Rows  | Supervised checkpoint              | Metric   |                                                            Baseline |                                                 Jev | Δ 95% CI                                                                        |
-| --------- | -------- | ----- | ---------------------------------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | ------------------------------------------------------------------------------- |
-| BANKING77 | Choice   | 3,080 | SPACE-2 `state_epoch_51`           | Accuracy |              [94.77](results/banking77/space-2/state_epoch_51.json) | [79.90](results/banking77/typesafe/jev-1.13.0.json) | [−16.27, −13.47](results/banking77/comparisons/jev-1.13.0--state_epoch_51.json) |
-| CLINC150  | Choice   | 4,500 | SPACE-2 `state_epoch_27`           | Accuracy |               [97.80](results/clinc150/space-2/state_epoch_27.json) |  [91.96](results/clinc150/typesafe/jev-1.13.0.json) | [−6.64, −5.07](results/clinc150/comparisons/jev-1.13.0--state_epoch_27.json)    |
-| HWU64     | Choice   | 1,076 | SPACE-2 `state_epoch_25`           | Accuracy |                  [94.24](results/hwu64/space-2/state_epoch_25.json) |     [83.09](results/hwu64/typesafe/jev-1.13.0.json) | [−13.38, −9.01](results/hwu64/comparisons/jev-1.13.0--state_epoch_25.json)      |
-| SST-2     | Noul     | 872   | `philschmid/roberta-large-sst2`    | Accuracy |           [96.44](results/sst2/huggingface/roberta-large-sst2.json) |      [94.50](results/sst2/typesafe/jev-1.13.0.json) | [−3.44, −0.46](results/sst2/comparisons/jev-1.13.0--roberta-large-sst2.json)    |
-| STS-B     | Score    | 1,379 | `cross-encoder/stsb-roberta-large` | Spearman | [91.44](results/stsb/sentence-transformers/stsb-roberta-large.json) |      [89.21](results/stsb/typesafe/jev-1.13.0.json) | [−3.36, −1.10](results/stsb/comparisons/jev-1.13.0--stsb-roberta-large.json)    |
+| Benchmark | Jev task | Rows  | Supervised checkpoint              | Metric   |                                                            Baseline |                                                 Jev |                                                          Zero-shot |                                                                                                    Δ 95% CI |
+| --------- | -------- | ----- | ---------------------------------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | -----------------------------------------------------------------: | ----------------------------------------------------------------------------------------------------------: |
+| BANKING77 | Choice   | 3,080 | SPACE-2 `state_epoch_51`           | Accuracy |              [94.77](results/banking77/space-2-state_epoch_51.json) | [79.90](results/banking77/typesafe-jev-1.13.0.json) | [67.14](results/banking77/nli-deberta-v3-large-zeroshot-v2.0.json) |            [−16.27, −13.47](results/banking77/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_51.json) |
+| CLINC150  | Choice   | 4,500 | SPACE-2 `state_epoch_27`           | Accuracy |               [97.80](results/clinc150/space-2-state_epoch_27.json) |  [91.96](results/clinc150/typesafe-jev-1.13.0.json) |                                                                  — |               [−6.64, −5.07](results/clinc150/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_27.json) |
+| HWU64     | Choice   | 1,076 | SPACE-2 `state_epoch_25`           | Accuracy |                  [94.24](results/hwu64/space-2-state_epoch_25.json) |     [83.09](results/hwu64/typesafe-jev-1.13.0.json) |     [56.32](results/hwu64/nli-deberta-v3-large-zeroshot-v2.0.json) |                 [−13.38, −9.01](results/hwu64/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_25.json) |
+| SST-2     | Noul     | 872   | `philschmid/roberta-large-sst2`    | Accuracy |           [96.44](results/sst2/huggingface-roberta-large-sst2.json) |      [94.50](results/sst2/typesafe-jev-1.13.0.json) |      [93.00](results/sst2/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−3.44, −0.46](results/sst2/comparisons/typesafe-jev-1.13.0--huggingface-roberta-large-sst2.json) |
+| STS-B     | Score    | 1,379 | `cross-encoder/stsb-roberta-large` | Spearman | [91.44](results/stsb/sentence-transformers-stsb-roberta-large.json) |      [89.21](results/stsb/typesafe-jev-1.13.0.json) |                                                                  — | [−3.36, −1.10](results/stsb/comparisons/typesafe-jev-1.13.0--sentence-transformers-stsb-roberta-large.json) |
 
 See [EVALUATION.md](EVALUATION.md) for definitions, provenance requirements,
 and limitations.
@@ -52,10 +54,17 @@ Use `uv run python -m MODULE --provider PROVIDER --limit 5` with a pair below:
 | SST-2     | `benchmarks.sst2`      | `huggingface`           | `typesafe`   |
 | STS-B     | `benchmarks.stsb`      | `sentence-transformers` | `typesafe`   |
 
+The local zero-shot baseline is available as `--provider nli` on the three
+intent benchmarks and SST-2.
+
 Remove `--limit 5` for a complete run. To continue a limited or interrupted
 run, rerun the same command with `--resume` and without `--limit`. TypeSafe runs
-accept `--concurrency N`; SPACE-2 requires the default concurrency of one. Use
-`--output PATH` to override the default ignored `runs/` directory.
+accept `--concurrency N`; SPACE-2 and `nli` require the default concurrency of
+one. Use `--output PATH` to override the default ignored `runs/` directory.
+
+Published results are named
+`results/<benchmark>/<provider>-<model>.json`; paired comparison artifacts live
+under `results/<benchmark>/comparisons/`.
 
 ### SPACE-2 setup
 
@@ -88,8 +97,8 @@ completed run directories. It loads no model and contacts no network:
 
 ```bash
 uv run python -m benchmarks.compare \
-  --left runs/sst2/typesafe/jev-1.13.0 \
-  --right runs/sst2/huggingface/roberta-large-sst2
+  --left runs/sst2/typesafe-jev-1.13.0 \
+  --right runs/sst2/huggingface-roberta-large-sst2
 ```
 
 Both runs must be complete and must score the same ordered rows. The command
@@ -130,6 +139,7 @@ See [EVALUATION.md](EVALUATION.md) for the frozen protocol.
 
 ## Backlog
 
+- Add NLI zero-shot provider
+- Refactor benchmarks and provider abstractions
 - Add providers for Kev, Laya
-- Add BART zero-shot provider
 - Analyse calibration with ECE
