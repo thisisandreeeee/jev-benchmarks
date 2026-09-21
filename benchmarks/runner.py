@@ -10,13 +10,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Callable
-
-from benchmarks.providers import Provider
+from typing import Any, Callable, TypeVar
 
 ROOT = Path(__file__).resolve().parents[1]
 Metrics = Callable[[list[dict[str, Any]]], dict[str, float | None]]
-Evaluate = Callable[[Provider, int, dict[str, Any]], dict[str, Any]]
+ProviderT = TypeVar("ProviderT")
+Evaluate = Callable[[ProviderT, int, dict[str, Any]], dict[str, Any]]
 
 
 def now() -> str:
@@ -97,11 +96,11 @@ def repository_clean() -> bool | None:
 
 def run_benchmark(
     dataset: Any,
-    provider: Provider,
+    provider: ProviderT,
     output: Path,
     *,
     identity: dict[str, Any],
-    evaluate: Evaluate,
+    evaluate: Evaluate[ProviderT],
     metrics: Metrics,
     result_path: Path,
     limit: int | None,
@@ -137,6 +136,10 @@ def run_benchmark(
     completed = {record["dataset_id"] for record in records}
     if not completed <= set(range(len(dataset))):
         raise ValueError("predictions contain dataset IDs outside the canonical evaluation split")
+    # Predictions are append-only; rebuild the summary before doing any work so
+    # a crash between the final JSONL write and run.json cannot publish stale data.
+    summarize(run, records, len(dataset), "complete" if len(completed) == len(dataset) else "partial", metrics)
+    atomic_json(run_path, run)
     stop = len(dataset) if limit is None else min(limit, len(dataset))
     pending = [(row_id, dataset[row_id]) for row_id in range(stop) if row_id not in completed]
     try:
@@ -163,20 +166,23 @@ def run_benchmark(
         atomic_json(run_path, run)
         raise
 
-    if {record["dataset_id"] for record in records} == set(range(len(dataset))):
+    complete = {record["dataset_id"] for record in records} == set(range(len(dataset)))
+    summarize(run, records, len(dataset), "complete" if complete else "partial", metrics)
+    atomic_json(run_path, run)
+    if complete:
         publish(run, result_path)
     return run
 
 
-def parse_run_args(description: str, default_output: Path, argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=description)
+def add_run_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--concurrency", type=int, default=1)
-    parser.add_argument("--output", type=Path, default=default_output)
-    args = parser.parse_args(argv)
+    parser.add_argument("--output", type=Path)
+
+
+def validate_run_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be at least 1")
     if args.concurrency < 1:
         parser.error("--concurrency must be at least 1")
-    return args

@@ -21,7 +21,7 @@ from benchmarks.providers import (
     CrossEncoderScoreProvider,
     TypeSafeProvider,
 )
-from benchmarks.runner import run_benchmark
+from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 SCHEMA_VERSION = 1
 BENCHMARK = "stsb"
@@ -172,15 +172,9 @@ def run(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--provider", choices=("sentence-transformers", "typesafe"), required=True)
-    parser.add_argument("--limit", type=int)
-    parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--concurrency", type=int, default=1)
-    parser.add_argument("--output", type=Path)
+    add_run_arguments(parser)
     args = parser.parse_args(argv)
-    if args.limit is not None and args.limit < 1:
-        parser.error("--limit must be at least 1")
-    if args.concurrency < 1:
-        parser.error("--concurrency must be at least 1")
+    validate_run_arguments(parser, args)
     if args.output is None:
         slug = SLUG if args.provider == "sentence-transformers" else JEV_MODEL
         args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
