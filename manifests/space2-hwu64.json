@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "paper": "https://aclanthology.org/2022.coling-1.46/",
+  "repository": {
+    "url": "https://github.com/AlibabaResearch/DAMO-ConvAI",
+    "commit": "188835d4f9948563a6b9c8ac50cd0f3ae4021ed6",
+    "subdirectory": "space-2",
+    "license": "MIT"
+  },
+  "checkpoint": {
+    "name": "outputs/hwu/94-33/state_epoch_25.model",
+    "sha256": "e00d0d35273e1a39bc6071bc0ec5720642b7099521c570f5f5932f6b7820b055",
+    "selected_epoch": 25
+  },
+  "reference_accuracy": 0.9433085501858736,
+  "reference_top1_accuracy": 0.9423791821561338,
+  "preprocessing": {
+    "tokenizer": "Bert uncased WordPiece",
+    "maximum_utterance_length": 50,
+    "maximum_length": 256,
+    "input": "<sos_u> + utterance + <eos_u>",
+    "text_alignment": "Seven author rows differ from the canonical source only in letter case; comparison is case-insensitive and the uncased tokenizer produces identical tokens.",
+    "reference_accuracy_note": "The saved accuracy applies author postprocessing; reference_top1_accuracy is the top-1 score of pred_labels and the local checkpoint.",
+    "compatibility": "The local adapter ports the released inference-only architecture to the pinned project runtime; three fixed top-1 predictions and probability vectors within 1e-4 are checked against the authors' saved output before evaluation."
+  },
+  "files": {
+    "outputs_archive": {
+      "path": "outputs.zip",
+      "url": "https://drive.usercontent.google.com/download?id=10QEEMNsjO5rH0ZRsJBj9zkDc5ozxc3Ch&export=download&confirm=t",
+      "size": 1228797366,
+      "sha256": "fda115824486ab29131a4fb547a23767de1637d13248b80eb0f124ac0d5af1ed"
+    },
+    "data_archive": {
+      "path": "data.zip",
+      "url": "https://drive.usercontent.google.com/download?id=1ocwnuOLxB3VzngeWZsm59IRrhEv22Scx&export=download&confirm=t",
+      "size": 509135275,
+      "sha256": "7a621e78c1f0e63a9b025a81657e31fcd13e23c10da405392a2cb7b700d16bf1"
+    },
+    "checkpoint": {
+      "path": "outputs/hwu/94-33/state_epoch_25.model",
+      "size": 438368308,
+      "sha256": "e00d0d35273e1a39bc6071bc0ec5720642b7099521c570f5f5932f6b7820b055"
+    },
+    "reference_predictions": {
+      "path": "outputs/hwu/94-33.infer/infer_25.result.json",
+      "size": 2033147,
+      "sha256": "1cea5c359c27e9f8fbab787102046eaeff70e254a721cd09da690614ef689980"
+    },
+    "author_test": {
+      "path": "data/pre_train/AnPreDial/single_turn/hwu/test.json",
+      "size": 372969,
+      "sha256": "001883b497bbf7eae98e9ca537f9f9458b5dc83d813f8871c9577e8043aac709"
+    },
+    "vocab": {
+      "path": "vocab.txt",
+      "url": "https://huggingface.co/google-bert/bert-base-uncased/resolve/86b5e0934494bd15c9632b12f734a8a67f723594/vocab.txt",
+      "revision": "86b5e0934494bd15c9632b12f734a8a67f723594",
+      "size": 231508,
+      "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+    }
+  },
+  "label_mapping": [
+    "alarm_query", "alarm_remove", "alarm_set", "audio_volume_down", "audio_volume_mute", "audio_volume_up",
+    "calendar_query", "calendar_remove", "calendar_set", "cooking_recipe", "datetime_convert", "datetime_query",
+    "email_addcontact", "email_query", "email_querycontact", "email_sendemail", "general_affirm",
+    "general_commandstop", "general_confirm", "general_dontcare", "general_explain", "general_joke",
+    "general_negate", "general_praise", "general_quirky", "general_repeat", "iot_cleaning", "iot_coffee",
+    "iot_hue_lightchange", "iot_hue_lightdim", "iot_hue_lightoff", "iot_hue_lighton", "iot_hue_lightup",
+    "iot_wemo_off", "iot_wemo_on", "lists_createoradd", "lists_query", "lists_remove", "music_likeness",
+    "music_query", "music_settings", "news_query", "play_audiobook", "play_game", "play_music", "play_podcasts",
+    "play_radio", "qa_currency", "qa_definition", "qa_factoid", "qa_maths", "qa_stock",
+    "recommendation_events", "recommendation_locations", "recommendation_movies", "social_post", "social_query",
+    "takeaway_order", "takeaway_query", "transport_query", "transport_taxi", "transport_ticket",
+    "transport_traffic", "weather_query"
+  ]
+}
