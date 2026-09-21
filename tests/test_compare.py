@@ -318,8 +318,8 @@ def test_publication_is_atomic_noop_and_refuses_conflicts(tmp_path: Path):
 
 
 def test_default_output_uses_benchmark_and_run_names():
-    path = compare.default_output("sst2", Path("runs/sst2/typesafe/jev-1.13.0"), Path("runs/sst2/huggingface/roberta"))
-    assert path == compare.ROOT / "results" / "sst2" / "comparisons" / "jev-1.13.0--roberta.json"
+    path = compare.default_output("sst2", Path("runs/sst2/typesafe-jev-1.13.0"), Path("runs/sst2/huggingface-roberta"))
+    assert path == compare.ROOT / "results" / "sst2" / "comparisons" / "typesafe-jev-1.13.0--huggingface-roberta.json"
 
 
 def test_parse_args_defaults_and_validation():

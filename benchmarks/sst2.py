@@ -128,7 +128,7 @@ def run(
         identity=identity(provider_name),
         evaluate=evaluate_one,
         metrics=noul_metrics,
-        result_path=ROOT / "results" / BENCHMARK / provider_name / f"{slug}.json",
+        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
@@ -143,8 +143,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
     if args.output is None:
-        slug = JEV_MODEL if args.provider == "typesafe" else SLUG
-        args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
+        if args.provider == "typesafe":
+            slug = JEV_MODEL
+        elif args.provider == "huggingface":
+            slug = SLUG
+        else:
+            slug = zeroshot.SLUG
+        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{slug}"
     return args
 
 

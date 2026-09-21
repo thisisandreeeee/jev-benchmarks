@@ -151,7 +151,7 @@ def test_complete_space2_run_publishes_to_provider_path(tmp_path: Path, monkeypa
         resume=False,
         concurrency=1,
     )
-    published = tmp_path / "results" / "fake" / "space-2" / "checkpoint.json"
+    published = tmp_path / "results" / "fake" / "space-2-checkpoint.json"
     assert result["status"] == "complete"
     assert json.loads(published.read_text())["metrics"]["accuracy"] == 1.0
 

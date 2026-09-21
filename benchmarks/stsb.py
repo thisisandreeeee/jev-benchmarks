@@ -161,7 +161,7 @@ def run(
         identity=identity(provider_name),
         evaluate=evaluate,
         metrics=similarity_metrics,
-        result_path=ROOT / "results" / BENCHMARK / provider_name / f"{slug}.json",
+        result_path=ROOT / "results" / BENCHMARK / f"{provider_name}-{slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
@@ -177,7 +177,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     validate_run_arguments(parser, args)
     if args.output is None:
         slug = SLUG if args.provider == "sentence-transformers" else JEV_MODEL
-        args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
+        args.output = ROOT / "runs" / BENCHMARK / f"{args.provider}-{slug}"
     return args
 
 

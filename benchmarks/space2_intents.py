@@ -160,7 +160,7 @@ def run(
         identity=identity(provider_name, labels, config, manifest),
         evaluate=lambda provider, row_id, row: evaluate_one(provider, row_id, row, labels, config.instruction),
         metrics=classification_metrics,
-        result_path=ROOT / "results" / config.benchmark / provider_name / f"{slug}.json",
+        result_path=ROOT / "results" / config.benchmark / f"{provider_name}-{slug}.json",
         limit=limit,
         resume=resume,
         concurrency=concurrency,
@@ -179,8 +179,13 @@ def parse_args(config: IntentConfig, argv: list[str] | None = None) -> argparse.
     if args.provider == "space-2" and args.concurrency != 1:
         parser.error("SPACE-2 requires --concurrency 1")
     if args.output is None:
-        slug = JEV_MODEL if args.provider == "typesafe" else config.space2_model
-        args.output = ROOT / "runs" / config.benchmark / args.provider / slug
+        if args.provider == "typesafe":
+            slug = JEV_MODEL
+        elif args.provider == "space-2":
+            slug = config.space2_model
+        else:
+            slug = zeroshot.SLUG
+        args.output = ROOT / "runs" / config.benchmark / f"{args.provider}-{slug}"
     return args
 
 
