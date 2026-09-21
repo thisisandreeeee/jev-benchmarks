@@ -1,0 +1,38 @@
+{
+  "dependencies": {
+    "datasets": "5.0.1",
+    "torch": "2.8.0",
+    "transformers": "4.56.2"
+  },
+  "evaluated": 872,
+  "identity": {
+    "benchmark": "sst2",
+    "dataset": {
+      "config": "sst2",
+      "id": "nyu-mll/glue",
+      "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+      "split": "validation"
+    },
+    "instruction": "Does this movie-review sentence express positive sentiment?",
+    "model": "philschmid/roberta-large-sst2",
+    "model_card": "https://huggingface.co/philschmid/roberta-large-sst2",
+    "model_revision": "7d2599d698b7a805b6831e15e830e60a0b07bdb4",
+    "positive_label": "positive",
+    "positive_outcome": "positive",
+    "provider": "huggingface-local",
+    "schema_version": 1
+  },
+  "metrics": {
+    "accuracy": 0.9644495412844036,
+    "expected_calibration_error": 0.022349305730436204,
+    "mean_confidence": 0.9824048420083269,
+    "negative_log_loss": 0.1399653012998279
+  },
+  "provider_statistics": {
+    "mean_confidence": 0.9824048420083269,
+    "usage": {}
+  },
+  "repository_clean": false,
+  "repository_revision": "ec4d4702042376d985e2570d6993cb8ab82d7f1c",
+  "total": 872
+}

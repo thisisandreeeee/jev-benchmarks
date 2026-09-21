@@ -1,0 +1,36 @@
+{
+  "dependencies": {
+    "datasets": "5.0.1",
+    "typesafe-sdk": "0.7.0"
+  },
+  "evaluated": 872,
+  "identity": {
+    "benchmark": "sst2",
+    "dataset": {
+      "config": "sst2",
+      "id": "nyu-mll/glue",
+      "revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+      "split": "validation"
+    },
+    "instruction": "Does this movie-review sentence express positive sentiment?",
+    "model": "jev-1.13.0",
+    "positive_outcome": "positive",
+    "provider": "typesafe",
+    "schema_version": 2
+  },
+  "metrics": {
+    "accuracy": 0.944954128440367,
+    "expected_calibration_error": 0.07284403669724772,
+    "mean_confidence": 0.8721100917431193,
+    "negative_log_loss": 0.19010093094003633
+  },
+  "provider_statistics": {
+    "mean_confidence": null,
+    "usage": {
+      "input_tokens": 261094,
+      "output_tokens": 17440
+    }
+  },
+  "repository_revision": "a904699915d1fd226a0091e8cd097ae06fa1ba63",
+  "total": 872
+}
