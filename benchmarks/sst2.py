@@ -12,8 +12,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from benchmarks import kev
 from benchmarks.metrics import noul_metrics
-from benchmarks.providers import Noul, NoulResult, Provider, TransformersNoulProvider, TypeSafeProvider
+from benchmarks.providers import Noul, NoulResult, Provider, SystemOneProvider, TransformersNoulProvider
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
 JEV_SCHEMA_VERSION = 2
@@ -67,6 +68,8 @@ def identity(provider: str) -> dict[str, Any]:
     }
     if provider == "typesafe":
         value.update({"schema_version": JEV_SCHEMA_VERSION, "provider": "typesafe", "model": JEV_MODEL})
+    elif provider == "kev":
+        value.update({"schema_version": JEV_SCHEMA_VERSION, **kev.identity(BENCHMARK)})
     elif provider == "huggingface":
         value.update(
             {
@@ -109,8 +112,8 @@ def run(
     concurrency: int,
 ) -> dict[str, Any]:
     validate_dataset(dataset)
-    if provider_name == "typesafe":
-        slug = JEV_MODEL
+    if provider_name in {"typesafe", "kev"}:
+        slug = JEV_MODEL if provider_name == "typesafe" else kev.SLUG
         dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
     elif provider_name == "huggingface":
         slug = SLUG
@@ -138,12 +141,14 @@ def run(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("typesafe", "huggingface"), required=True)
+    parser.add_argument("--provider", choices=("typesafe", "huggingface", "kev"), required=True)
     add_run_arguments(parser)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
+    if args.provider == "kev" and args.concurrency != 1:
+        parser.error("kev requires --concurrency 1")
     if args.output is None:
-        slug = JEV_MODEL if args.provider == "typesafe" else SLUG
+        slug = JEV_MODEL if args.provider == "typesafe" else kev.SLUG if args.provider == "kev" else SLUG
         args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
     return args
 
@@ -155,7 +160,9 @@ def main(argv: list[str] | None = None) -> int:
     dataset = load_dataset(DATASET_ID, DATASET_CONFIG, revision=DATASET_REVISION, split=DATASET_SPLIT)
     if args.provider == "typesafe":
         load_dotenv(ROOT / ".env")
-        provider: Provider = TypeSafeProvider(JEV_MODEL)
+        provider: Provider = SystemOneProvider(JEV_MODEL)
+    elif args.provider == "kev":
+        provider = kev.provider()
     else:
         provider = TransformersNoulProvider(MODEL, MODEL_REVISION, POSITIVE_LABEL)
     try:

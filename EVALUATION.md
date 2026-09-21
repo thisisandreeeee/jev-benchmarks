@@ -14,6 +14,28 @@ zero-shot learning is generally better than supervised learning.
 - **Comparable result**: both systems predict the same pinned evaluation rows
   and are scored by the same repository metric implementation.
 
+## Frozen decision models
+
+Jev-like systems run through the same frozen questions as Jev. No benchmark
+examples, parameter updates, prompt tuning, temperature fitting, or hierarchical
+label routing are supplied during evaluation. Each result records known training
+exposure separately:
+
+- `benchmark_train_split`: the released model trained on the benchmark family;
+- `related_task`: the model trained on a different dataset for the same task;
+- `no_known_task_specific_training`: the published training sources do not name
+  the benchmark or an equivalent task-specific dataset.
+
+These categories do not rule out base-model pretraining contamination. Results
+with different exposure remain same-row measurements but are not evidence of the
+same learning regime.
+
+The first additional frozen system is KEV-4B. It runs from a pinned local server
+through the System One contract with its raw temperature of 1.0. BANKING77 is
+marked `benchmark_train_split`; SST-2 is marked `related_task` because KEV trained
+on SST-5 and other sentiment datasets. The other current benchmarks have no
+known task-specific training in KEV's published decision-model training mix.
+
 Zero-shot does not mean that Jev's upstream training data is known to exclude
 the benchmark. All selected datasets are public, so contamination cannot be
 ruled out.

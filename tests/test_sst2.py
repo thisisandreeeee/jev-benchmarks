@@ -45,6 +45,8 @@ def test_huggingface_identity_pins_model_and_same_evaluation_split():
 
 def test_provider_selects_existing_default_output_paths():
     jev = sst2.parse_args(["--provider", "typesafe"])
+    kev = sst2.parse_args(["--provider", "kev"])
     huggingface = sst2.parse_args(["--provider", "huggingface"])
     assert jev.output == sst2.ROOT / "runs" / "sst2" / "typesafe" / sst2.JEV_MODEL
+    assert kev.output == sst2.ROOT / "runs" / "sst2" / "kev" / "kev-4b"
     assert huggingface.output == sst2.ROOT / "runs" / "sst2" / "huggingface" / sst2.SLUG

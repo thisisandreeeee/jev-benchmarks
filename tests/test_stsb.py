@@ -36,7 +36,7 @@ def test_cross_encoder_record_preserves_pair_and_scalar_result():
 
 
 def test_typesafe_uses_the_same_row_and_frozen_rubric():
-    record = stsb.evaluate_typesafe(FakeTypeSafe(), 7, ROWS[0])
+    record = stsb.evaluate_system_one(FakeTypeSafe(), 7, ROWS[0])
     assert record["expected"] == 4.5
     assert record["question"]["criteria"] == list(stsb.RUBRIC)
 
@@ -44,8 +44,9 @@ def test_typesafe_uses_the_same_row_and_frozen_rubric():
 def test_identity_pins_original_test_rows_model_and_separate_paths(tmp_path: Path, monkeypatch):
     local = stsb.identity("sentence-transformers")
     jev = stsb.identity("typesafe")
+    kev = stsb.identity("kev")
     assert local["benchmark"] == "stsb"
-    assert local["dataset"] == jev["dataset"]
+    assert local["dataset"] == jev["dataset"] == kev["dataset"]
     assert local["dataset"]["split"] == "test"
     assert local["dataset"]["rows"] == 1_379
     assert len(local["dataset"]["row_digest"]) == 64
@@ -55,7 +56,9 @@ def test_identity_pins_original_test_rows_model_and_separate_paths(tmp_path: Pat
     monkeypatch.setattr(stsb, "ROOT", tmp_path)
     local_args = stsb.parse_args(["--provider", "sentence-transformers"])
     jev_args = stsb.parse_args(["--provider", "typesafe"])
+    kev_args = stsb.parse_args(["--provider", "kev"])
     assert local_args.output != jev_args.output
+    assert kev_args.output == tmp_path / "runs" / "stsb" / "kev" / "kev-4b"
 
 
 def test_row_digest_is_order_and_label_sensitive():

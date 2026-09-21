@@ -10,7 +10,7 @@ from benchmarks.providers import (
     Score,
     CrossEncoderScoreProvider,
     TransformersNoulProvider,
-    TypeSafeProvider,
+    SystemOneProvider,
     _label_indices,
 )
 
@@ -28,8 +28,10 @@ class FakeClient:
 
 
 def provider_with(answer):
-    provider = object.__new__(TypeSafeProvider)
+    provider = object.__new__(SystemOneProvider)
     provider.model = "jev-1.13.0"
+    provider.provider_name = "typesafe"
+    provider.metadata = {}
     provider.client = FakeClient(answer)
     return provider
 

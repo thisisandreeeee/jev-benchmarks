@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 from dotenv import load_dotenv
 
+from benchmarks import kev
 from benchmarks.metrics import similarity_metrics
 from benchmarks.providers import (
     Provider,
@@ -19,7 +20,7 @@ from benchmarks.providers import (
     Score,
     ScoreResult,
     CrossEncoderScoreProvider,
-    TypeSafeProvider,
+    SystemOneProvider,
 )
 from benchmarks.runner import add_run_arguments, run_benchmark, validate_run_arguments
 
@@ -98,6 +99,8 @@ def identity(provider: str) -> dict[str, Any]:
         )
     elif provider == "typesafe":
         value["model"] = JEV_MODEL
+    elif provider == "kev":
+        value.update(kev.identity(BENCHMARK))
     else:
         raise ValueError(f"unsupported provider: {provider}")
     return value
@@ -121,7 +124,7 @@ def evaluate_sentence_transformer(provider: Any, row_id: int, row: dict[str, Any
     return _record(row_id, row, question, provider.infer_pair(row["sentence1"], row["sentence2"]))
 
 
-def evaluate_typesafe(provider: Provider, row_id: int, row: dict[str, Any]) -> dict[str, Any]:
+def evaluate_system_one(provider: Provider, row_id: int, row: dict[str, Any]) -> dict[str, Any]:
     question = Score(INSTRUCTION, RUBRIC)
     state = f"Sentence 1: {row['sentence1']}\nSentence 2: {row['sentence2']}"
     return _record(row_id, row, question, provider.infer(state, question))
@@ -148,9 +151,9 @@ def run(
             "torch": version("torch"),
             "transformers": version("transformers"),
         }
-    elif provider_name == "typesafe":
-        evaluate = evaluate_typesafe
-        slug = JEV_MODEL
+    elif provider_name in {"typesafe", "kev"}:
+        evaluate = evaluate_system_one
+        slug = JEV_MODEL if provider_name == "typesafe" else kev.SLUG
         dependencies = {"datasets": version("datasets"), "typesafe-sdk": version("typesafe-sdk")}
     else:
         raise ValueError(f"unsupported provider: {provider_name}")
@@ -171,12 +174,14 @@ def run(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("sentence-transformers", "typesafe"), required=True)
+    parser.add_argument("--provider", choices=("sentence-transformers", "typesafe", "kev"), required=True)
     add_run_arguments(parser)
     args = parser.parse_args(argv)
     validate_run_arguments(parser, args)
+    if args.provider == "kev" and args.concurrency != 1:
+        parser.error("kev requires --concurrency 1")
     if args.output is None:
-        slug = SLUG if args.provider == "sentence-transformers" else JEV_MODEL
+        slug = SLUG if args.provider == "sentence-transformers" else kev.SLUG if args.provider == "kev" else JEV_MODEL
         args.output = ROOT / "runs" / BENCHMARK / args.provider / slug
     return args
 
@@ -188,9 +193,11 @@ def main(argv: list[str] | None = None) -> int:
     dataset = load_dataset(DATASET_ID, DATASET_CONFIG, revision=DATASET_REVISION, split=DATASET_SPLIT)
     if args.provider == "sentence-transformers":
         provider: Any = CrossEncoderScoreProvider(MODEL, MODEL_REVISION)
-    else:
+    elif args.provider == "typesafe":
         load_dotenv(ROOT / ".env")
-        provider = TypeSafeProvider(JEV_MODEL)
+        provider = SystemOneProvider(JEV_MODEL)
+    else:
+        provider = kev.provider()
     try:
         result = run(
             dataset,
