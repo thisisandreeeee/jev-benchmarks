@@ -42,7 +42,7 @@
     },
     "path": "runs/sst2/typesafe-jev-1.13.0",
     "predictions_sha256": "70a56357866d8c9f57e9d87b01c4be1dd24c40daa8685bba13a01712b332a614",
-    "run_sha256": "5bf7dfcd524096d7278954226b9b4795f77e7a61558ac0fe0b857ac5d392019b",
+    "run_sha256": "0e8fcf223d622600809eb3de8944a8c450c1e7a3b09fc8b82658b6a0c133753e",
     "score": 0.944954128440367
   },
   "metric": "accuracy",
@@ -72,7 +72,7 @@
     },
     "path": "runs/sst2/huggingface-roberta-large-sst2",
     "predictions_sha256": "ae8189282d2dab59481081041ae289c9bff97ba10235aa4962b1dfb0ece3c77c",
-    "run_sha256": "e1f3486caba13ca5900e332a26b601685bd9a46d435bee2c6d768c9d57b2e8ea",
+    "run_sha256": "0ef4687e0001256ae9fa8f685d64d3e367db8763f386afc30d1a2fc520384be2",
     "score": 0.9644495412844036
   },
   "row_digest": "dd5ac3ff6d6b82764596848824822006276abcfb7401d6c44078d01f852cfce4",
