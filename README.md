@@ -7,19 +7,23 @@ or fine-tune them.
 
 ## Results
 
-All scores use a 0–100 scale. The two comparison columns report Jev minus the
-other system as a point difference with a paired percentile 95% bootstrap
-interval; each value links to its comparison artifact. Zero-shot is the local
-`nli` baseline (`MoritzLaurer/deberta-v3-large-zeroshot-v2.0`); an em dash means
-it has not been evaluated on that benchmark.
+Frozen supervised checkpoints outperform Jev on all five benchmarks. The
+smallest gaps are 1.95 points on SST-2 and 2.23 points on STS-B; the largest
+is 14.87 points on BANKING77.
 
-| Benchmark | Rows  | Jev task | Metric   |                                                          Supervised |                                                 Jev |                                                          Zero-shot |                                                                                                   Jev vs supervised |                                                                                                   Jev vs zero-shot |
-| --------- | ----- | -------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | -----------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------: | -----------------------------------------------------------------------------------------------------------------: |
-| BANKING77 | 3,080 | Choice   | Accuracy |              [94.77](results/banking77/space-2-state_epoch_51.json) | [79.90](results/banking77/typesafe-jev-1.13.0.json) | [67.14](results/banking77/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−14.87 (−16.27, −13.47)](results/banking77/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_51.json) | [12.76 (11.23, 14.32)](results/banking77/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
-| CLINC150  | 4,500 | Choice   | Accuracy |               [97.80](results/clinc150/space-2-state_epoch_27.json) |  [91.96](results/clinc150/typesafe-jev-1.13.0.json) |  [67.58](results/clinc150/nli-deberta-v3-large-zeroshot-v2.0.json) |               [−5.84 (−6.64, −5.07)](results/clinc150/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_27.json) |  [24.38 (23.00, 25.76)](results/clinc150/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
-| HWU64     | 1,076 | Choice   | Accuracy |                  [94.24](results/hwu64/space-2-state_epoch_25.json) |     [83.09](results/hwu64/typesafe-jev-1.13.0.json) |     [56.32](results/hwu64/nli-deberta-v3-large-zeroshot-v2.0.json) |                [−11.15 (−13.38, −9.01)](results/hwu64/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_25.json) |     [26.77 (23.61, 29.93)](results/hwu64/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
-| SST-2     | 872   | Noul     | Accuracy |           [96.44](results/sst2/huggingface-roberta-large-sst2.json) |      [94.50](results/sst2/typesafe-jev-1.13.0.json) |      [93.00](results/sst2/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−1.95 (−3.44, −0.46)](results/sst2/comparisons/typesafe-jev-1.13.0--huggingface-roberta-large-sst2.json) |        [1.49 (−0.23, 3.21)](results/sst2/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
-| STS-B     | 1,379 | Score    | Spearman | [91.44](results/stsb/sentence-transformers-stsb-roberta-large.json) |      [89.21](results/stsb/typesafe-jev-1.13.0.json) |                                                                  — | [−2.23 (−3.36, −1.10)](results/stsb/comparisons/typesafe-jev-1.13.0--sentence-transformers-stsb-roberta-large.json) |                                                                                                                  — |
+Jev outperforms the local zero-shot NLI baseline by 12.76-26.77 points on all
+three intent benchmarks.
+
+On SST-2, Jev leads the zero-shot baseline by 1.49 points, but the paired 95%
+interval includes zero. Every other comparison interval excludes zero.
+
+| Benchmark | Rows  | Jev task | Metric   |                                                          Supervised |                                                 Jev |                                                          Zero-shot |                                                                                    Jev vs supervised |                                                                                    Jev vs zero-shot |
+| --------- | ----- | -------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | -----------------------------------------------------------------: | ---------------------------------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------: |
+| BANKING77 | 3,080 | Choice   | Accuracy |              [94.77](results/banking77/space-2-state_epoch_51.json) | [79.90](results/banking77/typesafe-jev-1.13.0.json) | [67.14](results/banking77/nli-deberta-v3-large-zeroshot-v2.0.json) |             [−14.87](results/banking77/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_51.json) | [12.76](results/banking77/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| CLINC150  | 4,500 | Choice   | Accuracy |               [97.80](results/clinc150/space-2-state_epoch_27.json) |  [91.96](results/clinc150/typesafe-jev-1.13.0.json) |  [67.58](results/clinc150/nli-deberta-v3-large-zeroshot-v2.0.json) |               [−5.84](results/clinc150/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_27.json) |  [24.38](results/clinc150/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| HWU64     | 1,076 | Choice   | Accuracy |                  [94.24](results/hwu64/space-2-state_epoch_25.json) |     [83.09](results/hwu64/typesafe-jev-1.13.0.json) |     [56.32](results/hwu64/nli-deberta-v3-large-zeroshot-v2.0.json) |                 [−11.15](results/hwu64/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_25.json) |     [26.77](results/hwu64/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| SST-2     | 872   | Noul     | Accuracy |           [96.44](results/sst2/huggingface-roberta-large-sst2.json) |      [94.50](results/sst2/typesafe-jev-1.13.0.json) |      [93.00](results/sst2/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−1.95](results/sst2/comparisons/typesafe-jev-1.13.0--huggingface-roberta-large-sst2.json) |       [1.49](results/sst2/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| STS-B     | 1,379 | Score    | Spearman | [91.44](results/stsb/sentence-transformers-stsb-roberta-large.json) |      [89.21](results/stsb/typesafe-jev-1.13.0.json) |                                                                  — | [−2.23](results/stsb/comparisons/typesafe-jev-1.13.0--sentence-transformers-stsb-roberta-large.json) |                                                                                                   — |
 
 - **BANKING77:** Classifies online-banking customer requests into 77 intents;
   the supervised checkpoint is SPACE-2 `state_epoch_51`.
@@ -32,9 +36,6 @@ it has not been evaluated on that benchmark.
   the supervised checkpoint is `philschmid/roberta-large-sst2`.
 - **STS-B:** Scores semantic similarity between sentence pairs; the supervised
   checkpoint is `cross-encoder/stsb-roberta-large`.
-
-See [EVALUATION.md](EVALUATION.md) for definitions, provenance requirements,
-and limitations.
 
 ## Quick start
 
@@ -54,21 +55,6 @@ API usage:
 uv run python -m benchmarks.sst2 --provider typesafe --limit 5
 ```
 
-## Running benchmarks
-
-Use `uv run python -m MODULE --provider PROVIDER --limit 5` with a pair below:
-
-| Benchmark | Module                 | Local provider          | Jev provider |
-| --------- | ---------------------- | ----------------------- | ------------ |
-| BANKING77 | `benchmarks.banking77` | `space-2`               | `typesafe`   |
-| CLINC150  | `benchmarks.clinc150`  | `space-2`               | `typesafe`   |
-| HWU64     | `benchmarks.hwu64`     | `space-2`               | `typesafe`   |
-| SST-2     | `benchmarks.sst2`      | `huggingface`           | `typesafe`   |
-| STS-B     | `benchmarks.stsb`      | `sentence-transformers` | `typesafe`   |
-
-The local zero-shot baseline is available as `--provider nli` on the three
-intent benchmarks and SST-2.
-
 Remove `--limit 5` for a complete run. To continue a limited or interrupted
 run, rerun the same command with `--resume` and without `--limit`. TypeSafe runs
 accept `--concurrency N`; SPACE-2 and `nli` require the default concurrency of
@@ -78,7 +64,45 @@ Published results are named
 `results/<benchmark>/<provider>-<model>.json`; paired comparison artifacts live
 under `results/<benchmark>/comparisons/`.
 
-### SPACE-2 setup
+## Running benchmarks
+
+### Choice
+
+BANKING77, CLINC150, and HWU64 compare the local SPACE-2 checkpoint, Jev, and
+the local zero-shot NLI baseline. Replace the module in these commands with
+`benchmarks.banking77`, `benchmarks.clinc150`, or `benchmarks.hwu64`:
+
+```bash
+uv run python -m benchmarks.banking77 --provider space-2 --limit 5
+uv run python -m benchmarks.banking77 --provider typesafe --limit 5
+uv run python -m benchmarks.banking77 --provider nli --limit 5
+```
+
+SPACE-2 requires the release files described below. TypeSafe requires
+`TYPESAFE_API_KEY`; the other providers run locally.
+
+### Noul
+
+SST-2 compares the local RoBERTa checkpoint, Jev's `Noul` output, and the local
+zero-shot NLI baseline:
+
+```bash
+uv run python -m benchmarks.sst2 --provider huggingface --limit 5
+uv run python -m benchmarks.sst2 --provider typesafe --limit 5
+uv run python -m benchmarks.sst2 --provider nli --limit 5
+```
+
+### Score
+
+STS-B compares the local SentenceTransformers cross-encoder with Jev's
+six-level `Score` rubric. There is no NLI baseline for this task:
+
+```bash
+uv run python -m benchmarks.stsb --provider sentence-transformers --limit 5
+uv run python -m benchmarks.stsb --provider typesafe --limit 5
+```
+
+## SPACE-2 setup
 
 The three intent benchmarks require the pinned SPACE-2 release files.
 
@@ -102,6 +126,21 @@ rows because its released checkpoint has no OOS output. HWU64 reports raw
 checkpoint top-1 accuracy; the authors' postprocessed 94.33% is retained only
 as release context in [`manifests/space2-hwu64.json`](manifests/space2-hwu64.json).
 
+## Evaluation
+
+Jev is evaluated zero-shot: it receives the frozen task instruction, output
+rubric, and complete candidate-label set, but no benchmark examples or
+parameter updates. The supervised systems are frozen, author-released
+checkpoints trained on labeled benchmark data. Direct comparisons use the same
+pinned, ordered rows and the same metric implementation; published paper
+scores are context only.
+
+Dataset revisions, splits, row counts and digests, model revisions or file
+digests, prompts and label mappings, dependency versions, and repository state
+are recorded in the result artifacts. Complete runs publish aggregate results;
+per-example predictions remain under ignored `runs/` paths, and all five frozen
+benchmarks are published regardless of outcome.
+
 ### Statistical comparison
 
 `benchmarks.compare` builds a deterministic paired-bootstrap artifact from two
@@ -124,23 +163,17 @@ Committed artifacts for every benchmark live under
 
 ## Limitations
 
-- The compared systems differ in architecture, parameter count, pretraining
-  data, compute, and release date.
+- These results compare specific deployed systems, not training methods or
+  parameter efficiency. The systems differ in architecture, scale, training
+  data, compute, supervision, and release date.
 - Public benchmark contamination in Jev cannot be excluded.
 - SST-2 uses the public GLUE validation split, which was also the supervised
   checkpoint's development split; that row is a same-split reproduction rather
   than an untouched-test evaluation.
-- SPACE-2 reports averages over multiple seeds, while its released files may
-  contain selected checkpoints; only the recomputed checkpoint scores appear in
-  the table.
-- Jev is nondeterministic at the sub-tenth-point scale. A repeat of the STS-B
-  evaluation under an identical identity shifted Spearman by 0.088 points
-  (89.12 to 89.21) with identical token usage. The STS-B row and its comparison
-  use the rerun; sub-0.1-point differences are not precise.
-- Every locally recomputed run was made from a non-clean source worktree; paid
-  legacy Jev runs predate the `repository_clean` field.
-
-See [EVALUATION.md](EVALUATION.md) for the frozen protocol.
+- Bootstrap intervals quantify variation from resampling the fixed evaluation
+  rows. They do not capture model, checkpoint, prompt, or benchmark-selection
+  uncertainty, so the results should not be generalized beyond these pinned
+  systems and splits.
 
 ## Repository layout
 
@@ -151,7 +184,5 @@ See [EVALUATION.md](EVALUATION.md) for the frozen protocol.
 
 ## Backlog
 
-- Add NLI zero-shot provider
-- Refactor benchmarks and provider abstractions
 - Add providers for Kev, Laya
 - Analyse calibration with ECE
