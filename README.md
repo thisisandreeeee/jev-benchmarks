@@ -7,19 +7,31 @@ or fine-tune them.
 
 ## Results
 
-All scores use a 0–100 scale. The Δ 95% CI is a paired percentile 95% bootstrap
-interval for Jev minus the supervised baseline over the evaluation rows; each
-interval links to its comparison artifact. The Zero-shot column is the local
-`nli` NLI baseline (`MoritzLaurer/deberta-v3-large-zeroshot-v2.0`); an em dash
-means it has not been evaluated on that benchmark yet.
+All scores use a 0–100 scale. The two comparison columns report Jev minus the
+other system as a point difference with a paired percentile 95% bootstrap
+interval; each value links to its comparison artifact. Zero-shot is the local
+`nli` baseline (`MoritzLaurer/deberta-v3-large-zeroshot-v2.0`); an em dash means
+it has not been evaluated on that benchmark.
 
-| Benchmark | Jev task | Rows  | Supervised checkpoint              | Metric   |                                                            Baseline |                                                 Jev |                                                          Zero-shot |                                                                                                    Δ 95% CI |
-| --------- | -------- | ----- | ---------------------------------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | -----------------------------------------------------------------: | ----------------------------------------------------------------------------------------------------------: |
-| BANKING77 | Choice   | 3,080 | SPACE-2 `state_epoch_51`           | Accuracy |              [94.77](results/banking77/space-2-state_epoch_51.json) | [79.90](results/banking77/typesafe-jev-1.13.0.json) | [67.14](results/banking77/nli-deberta-v3-large-zeroshot-v2.0.json) |            [−16.27, −13.47](results/banking77/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_51.json) |
-| CLINC150  | Choice   | 4,500 | SPACE-2 `state_epoch_27`           | Accuracy |               [97.80](results/clinc150/space-2-state_epoch_27.json) |  [91.96](results/clinc150/typesafe-jev-1.13.0.json) |  [67.58](results/clinc150/nli-deberta-v3-large-zeroshot-v2.0.json) |               [−6.64, −5.07](results/clinc150/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_27.json) |
-| HWU64     | Choice   | 1,076 | SPACE-2 `state_epoch_25`           | Accuracy |                  [94.24](results/hwu64/space-2-state_epoch_25.json) |     [83.09](results/hwu64/typesafe-jev-1.13.0.json) |     [56.32](results/hwu64/nli-deberta-v3-large-zeroshot-v2.0.json) |                 [−13.38, −9.01](results/hwu64/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_25.json) |
-| SST-2     | Noul     | 872   | `philschmid/roberta-large-sst2`    | Accuracy |           [96.44](results/sst2/huggingface-roberta-large-sst2.json) |      [94.50](results/sst2/typesafe-jev-1.13.0.json) |      [93.00](results/sst2/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−3.44, −0.46](results/sst2/comparisons/typesafe-jev-1.13.0--huggingface-roberta-large-sst2.json) |
-| STS-B     | Score    | 1,379 | `cross-encoder/stsb-roberta-large` | Spearman | [91.44](results/stsb/sentence-transformers-stsb-roberta-large.json) |      [89.21](results/stsb/typesafe-jev-1.13.0.json) |                                                                  — | [−3.36, −1.10](results/stsb/comparisons/typesafe-jev-1.13.0--sentence-transformers-stsb-roberta-large.json) |
+| Benchmark | Rows  | Jev task | Metric   |                                                          Supervised |                                                 Jev |                                                          Zero-shot |                                                                                                   Jev vs supervised |                                                                                                   Jev vs zero-shot |
+| --------- | ----- | -------- | -------- | ------------------------------------------------------------------: | --------------------------------------------------: | -----------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------: | -----------------------------------------------------------------------------------------------------------------: |
+| BANKING77 | 3,080 | Choice   | Accuracy |              [94.77](results/banking77/space-2-state_epoch_51.json) | [79.90](results/banking77/typesafe-jev-1.13.0.json) | [67.14](results/banking77/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−14.87 (−16.27, −13.47)](results/banking77/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_51.json) | [12.76 (11.23, 14.32)](results/banking77/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| CLINC150  | 4,500 | Choice   | Accuracy |               [97.80](results/clinc150/space-2-state_epoch_27.json) |  [91.96](results/clinc150/typesafe-jev-1.13.0.json) |  [67.58](results/clinc150/nli-deberta-v3-large-zeroshot-v2.0.json) |               [−5.84 (−6.64, −5.07)](results/clinc150/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_27.json) |  [24.38 (23.00, 25.76)](results/clinc150/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| HWU64     | 1,076 | Choice   | Accuracy |                  [94.24](results/hwu64/space-2-state_epoch_25.json) |     [83.09](results/hwu64/typesafe-jev-1.13.0.json) |     [56.32](results/hwu64/nli-deberta-v3-large-zeroshot-v2.0.json) |                [−11.15 (−13.38, −9.01)](results/hwu64/comparisons/typesafe-jev-1.13.0--space-2-state_epoch_25.json) |     [26.77 (23.61, 29.93)](results/hwu64/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| SST-2     | 872   | Noul     | Accuracy |           [96.44](results/sst2/huggingface-roberta-large-sst2.json) |      [94.50](results/sst2/typesafe-jev-1.13.0.json) |      [93.00](results/sst2/nli-deberta-v3-large-zeroshot-v2.0.json) |           [−1.95 (−3.44, −0.46)](results/sst2/comparisons/typesafe-jev-1.13.0--huggingface-roberta-large-sst2.json) |        [1.49 (−0.23, 3.21)](results/sst2/comparisons/typesafe-jev-1.13.0--nli-deberta-v3-large-zeroshot-v2.0.json) |
+| STS-B     | 1,379 | Score    | Spearman | [91.44](results/stsb/sentence-transformers-stsb-roberta-large.json) |      [89.21](results/stsb/typesafe-jev-1.13.0.json) |                                                                  — | [−2.23 (−3.36, −1.10)](results/stsb/comparisons/typesafe-jev-1.13.0--sentence-transformers-stsb-roberta-large.json) |                                                                                                                  — |
+
+- **BANKING77:** Classifies online-banking customer requests into 77 intents;
+  the supervised checkpoint is SPACE-2 `state_epoch_51`.
+- **CLINC150:** Classifies virtual-assistant requests into 150 in-scope intents;
+  the supervised checkpoint is SPACE-2 `state_epoch_27`, and OOS rows are
+  excluded because the released checkpoint has no OOS output.
+- **HWU64:** Classifies home-assistant requests into 64 intents; the supervised
+  checkpoint is SPACE-2 `state_epoch_25`, scored by raw checkpoint top-1 output.
+- **SST-2:** Predicts positive or negative sentiment for movie-review sentences;
+  the supervised checkpoint is `philschmid/roberta-large-sst2`.
+- **STS-B:** Scores semantic similarity between sentence pairs; the supervised
+  checkpoint is `cross-encoder/stsb-roberta-large`.
 
 See [EVALUATION.md](EVALUATION.md) for definitions, provenance requirements,
 and limitations.
